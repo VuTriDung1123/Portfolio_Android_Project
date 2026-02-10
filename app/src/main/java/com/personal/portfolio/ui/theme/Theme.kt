@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// Cấu hình Light Theme (Sakura chủ yếu dùng Light Mode)
+// Giữ nguyên bảng màu
 private val SakuraColorScheme = lightColorScheme(
     primary = SakuraPrimary,
     secondary = SakuraSecondary,
@@ -25,26 +25,25 @@ private val SakuraColorScheme = lightColorScheme(
 
 @Composable
 fun SakuraPortfolioTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(), // Tạm thời ưu tiên Light Theme
+    lang: String = "en", // [MỚI] Thêm tham số ngôn ngữ
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Sakura Portfolio luôn dùng Light Scheme để giữ vẻ tươi sáng
     val colorScheme = SakuraColorScheme
     val view = LocalView.current
 
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Thanh trạng thái màu hồng nhạt
             window.statusBarColor = SakuraBg.toArgb()
-            // Icon thanh trạng thái màu tối
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Sẽ update file Type.kt sau
+        // [MỚI] Gọi hàm lấy Typography theo ngôn ngữ từ Type.kt
+        typography = getTypography(lang),
         content = content
     )
 }
