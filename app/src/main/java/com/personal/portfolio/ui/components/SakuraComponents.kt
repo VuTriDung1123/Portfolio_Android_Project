@@ -185,3 +185,37 @@ fun ContactRow(item: ContactItem) {
         }
     }
 }
+
+// --- 7. SAKURA TOP NAV (Thanh điều hướng trên cùng) ---
+@Composable
+fun SakuraTopNav() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, start = 20.dp, end = 20.dp, bottom = 10.dp)
+            .height(60.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start // Căn trái
+    ) {
+        // 1. Avatar (Gọi Component SakuraAvatar của bạn)
+        // Lưu ý: Đảm bảo file SakuraAvatar.kt nằm đúng package
+        SakuraAvatar(modifier = Modifier.size(50.dp))
+
+        Spacer(modifier = Modifier.width(15.dp))
+
+        // 2. Tên & Danh hiệu
+        Column {
+            Text(
+                text = "Vũ Trí Dũng",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = SakuraTextDark
+            )
+            Text(
+                text = "Lập trình viên Đam mê ✨",
+                style = MaterialTheme.typography.bodySmall,
+                color = SakuraPrimary
+            )
+        }
+    }
+}
