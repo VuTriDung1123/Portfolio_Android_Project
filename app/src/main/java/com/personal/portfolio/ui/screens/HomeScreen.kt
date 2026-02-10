@@ -1,9 +1,7 @@
 package com.personal.portfolio.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,18 +14,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.personal.portfolio.R
 import com.personal.portfolio.data.SakuraData
 import com.personal.portfolio.ui.components.*
 import com.personal.portfolio.ui.theme.*
@@ -35,17 +29,20 @@ import com.personal.portfolio.ui.theme.*
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
-    var showChatDialog by remember { mutableStateOf(false) } // Trạng thái mở hộp chat
+    var showChatDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. LỚP NỀN: Hiệu ứng cánh hoa rơi
+        // 1. LỚP NỀN: Cánh hoa rơi (Đã fix tốc độ & hình dáng)
         SakuraFallingEffect()
 
         // 2. LỚP GIAO DIỆN CHÍNH
         Scaffold(
-            containerColor = Color.Transparent, // Để nhìn thấy nền hoa
+            containerColor = Color.Transparent,
+            // [FIX] Thêm TopNav vào đây
+            topBar = {
+                SakuraTopNav()
+            },
             floatingActionButton = {
-                // Nút Chat AI (Góc phải dưới)
                 FloatingActionButton(
                     onClick = { showChatDialog = true },
                     containerColor = SakuraPrimary,
@@ -62,35 +59,22 @@ fun HomeScreen() {
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = 100.dp) // Để không bị nút Chat che nội dung cuối
+                contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                // --- A. HERO SECTION (Avatar & Intro) ---
+                // --- A. HERO SECTION (Avatar to & Intro) ---
                 item {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 40.dp, bottom = 20.dp),
+                            .padding(top = 20.dp, bottom = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Avatar
-                        Box(
-                            modifier = Modifier
-                                .size(160.dp)
-                                .border(4.dp, SakuraSecondary, CircleShape)
-                                .padding(4.dp)
-                                .clip(CircleShape)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Thay bằng ảnh thật của bạn sau
-                                contentDescription = "Avatar",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize().background(Color.White)
-                            )
-                        }
+                        // [FIX] Dùng SakuraAvatar thật thay vì ảnh tạm
+                        // Avatar to ở giữa màn hình
+                        SakuraAvatar(modifier = Modifier.size(160.dp))
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Tên & Badge
                         Text(
                             text = SakuraData.hero["greeting"] ?: "Hello",
                             color = SakuraPrimary,
@@ -113,7 +97,6 @@ fun HomeScreen() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Mô tả ngắn
                         Text(
                             text = SakuraData.hero["desc"] ?: "",
                             textAlign = TextAlign.Center,
@@ -147,7 +130,6 @@ fun HomeScreen() {
                 // --- D. KỸ NĂNG ---
                 item {
                     SectionCard(title = "KỸ NĂNG") {
-                        // Hiển thị dạng lưới đơn giản
                         Column {
                             SakuraData.skills.forEach { item -> SkillItem(item) }
                         }
@@ -187,14 +169,16 @@ fun HomeScreen() {
             }
         }
 
-        // 3. DIALOG CHAT AI (Giả lập)
+        // 3. DIALOG CHAT AI
         if (showChatDialog) {
             ChatDialog(onDismiss = { showChatDialog = false })
         }
     }
 }
 
-// --- HELPER COMPONENT: BADGE ---
+// Giữ nguyên Badge và ChatDialog ở cuối file này...
+// (Nếu bạn đã có Badge và ChatDialog ở phiên bản trước thì giữ nguyên,
+// nếu chưa thì copy lại từ bước 4 cũ)
 @Composable
 fun Badge(text: String) {
     Surface(
@@ -212,7 +196,6 @@ fun Badge(text: String) {
     }
 }
 
-// --- HELPER COMPONENT: CHAT DIALOG ---
 @Composable
 fun ChatDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
@@ -243,7 +226,7 @@ fun ChatDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                // Body (Message list giả lập)
+                // Body
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -251,7 +234,6 @@ fun ChatDialog(onDismiss: () -> Unit) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Bottom
                 ) {
-                    // Tin nhắn chào mừng
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         color = Color.White,
@@ -259,7 +241,7 @@ fun ChatDialog(onDismiss: () -> Unit) {
                         shadowElevation = 2.dp
                     ) {
                         Text(
-                            text = "Xin chào! 🌸 Mình là trợ lý ảo của Dũng. Bạn cần giúp gì không?",
+                            text = "Xin chào! 🌸 Mình là trợ lý ảo của Dũng.",
                             modifier = Modifier.padding(12.dp),
                             color = SakuraTextDark
                         )
@@ -277,9 +259,7 @@ fun ChatDialog(onDismiss: () -> Unit) {
                         value = "",
                         onValueChange = {},
                         placeholder = { Text("Nhập tin nhắn...", fontSize = 14.sp) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp),
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
                         shape = CircleShape,
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = SakuraSecondary,
@@ -287,10 +267,8 @@ fun ChatDialog(onDismiss: () -> Unit) {
                         )
                     )
                     IconButton(
-                        onClick = { /* TODO: Implement AI Chat Logic later */ },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(SakuraPrimary, CircleShape)
+                        onClick = { },
+                        modifier = Modifier.size(48.dp).background(SakuraPrimary, CircleShape)
                     ) {
                         Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
                     }
