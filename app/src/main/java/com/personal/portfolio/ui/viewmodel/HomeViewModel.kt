@@ -11,10 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = false, // Chỉ true khi mở app lần đầu
     val error: String? = null,
 
-    // Data Static
     val hero: HeroData = HeroData(),
     val about: String = "",
     val profile: List<SectionBox> = emptyList(),
@@ -23,13 +22,10 @@ data class HomeUiState(
     val experience: List<ExpGroup> = emptyList(),
     val contact: List<SectionBox> = emptyList(),
     val faq: List<FaqItem> = emptyList(),
-
-    // [MỚI] Thêm data cho các section còn thiếu
-    val certificates: String = "", // Có thể là text hoặc list tuỳ bạn lưu DB
+    val certificates: String = "",
     val achievements: String = "",
-    val gallery: List<String> = emptyList(), // List URL ảnh
+    val gallery: List<String> = emptyList(),
 
-    // Data Dynamic (Posts)
     val allPosts: List<Post> = emptyList(),
     val filteredPosts: List<Post> = emptyList(),
     val selectedTag: String = "ALL"
@@ -42,13 +38,17 @@ class HomeViewModel : ViewModel() {
 
     fun loadAllData(lang: String = "vi") {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            // [FIX LAG] CHỈ hiện Loading khi chưa có dữ liệu Hero (lần đầu mở app)
+            // Nếu đã có dữ liệu cũ, không set isLoading = true nữa -> Không bị nháy màn hình
+            val isFirstLoad = _uiState.value.hero.fullName.isEmpty()
+            if (isFirstLoad) {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
 
             try {
-                // 1. Gọi API lấy Posts
+                // Các bước gọi API giữ nguyên, chạy ngầm
                 val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() } }
 
-                // 2. Helper fetch
                 suspend fun fetchRawJson(key: String): String? {
                     val res = try { RetrofitClient.api.getSectionContent(key) } catch (e: Exception) { null }
                     return if (res != null) {
@@ -56,7 +56,6 @@ class HomeViewModel : ViewModel() {
                     } else null
                 }
 
-                // 3. Fetch song song
                 val heroJson = fetchRawJson("hero")
                 val aboutJson = fetchRawJson("about")
                 val careerJson = fetchRawJson("career")
@@ -65,25 +64,21 @@ class HomeViewModel : ViewModel() {
                 val expJson = fetchRawJson("experience")
                 val contactJson = fetchRawJson("contact")
                 val faqJson = fetchRawJson("faq_data")
-                // [MỚI] Fetch thêm
                 val certJson = fetchRawJson("certificates")
                 val achiJson = fetchRawJson("achievements")
                 val galleryJson = fetchRawJson("gallery")
 
-                // 4. Parse Data
                 val heroData = if(!heroJson.isNullOrEmpty()) gson.fromJson(heroJson, HeroData::class.java) else HeroData()
                 val profileList = if(!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(profileJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
                 val contactList = if(!contactJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(contactJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val faqList = if(!faqJson.isNullOrEmpty()) gson.fromJson<List<FaqItem>>(faqJson, object : TypeToken<List<FaqItem>>() {}.type) else emptyList()
-
-                // [MỚI] Parse Gallery (Giả sử lưu dạng List<String> url)
                 val galleryList = if(!galleryJson.isNullOrEmpty()) try { gson.fromJson<List<String>>(galleryJson, object : TypeToken<List<String>>() {}.type) } catch(e:Exception){ emptyList() } else emptyList()
 
                 val allPosts = postsDeferred.await()
 
                 _uiState.value = HomeUiState(
-                    isLoading = false,
+                    isLoading = false, // Tắt loading (nếu đang bật)
                     hero = heroData,
                     about = aboutJson ?: "",
                     career = careerJson ?: "",
@@ -92,7 +87,6 @@ class HomeViewModel : ViewModel() {
                     experience = expList,
                     contact = contactList,
                     faq = faqList,
-                    // [MỚI]
                     certificates = certJson ?: "",
                     achievements = achiJson ?: "",
                     gallery = galleryList,
@@ -107,7 +101,7 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
-    // ... Giữ nguyên các hàm filter ...
+
     fun filterPosts(tag: String) {
         val currentPosts = _uiState.value.allPosts
         val filtered = if (tag == "ALL") currentPosts else currentPosts.filter { it.tag == tag }

@@ -11,7 +11,6 @@ data class SimpleItem(val title: String, val subtitle: String, val imageRes: Int
 
 // --- DATA HOLDER ---
 data class PortfolioContent(
-    // 1. DATA NỘI DUNG (Cũ)
     val hero: Map<String, String>,
     val about: String,
     val profile: List<InfoItem>,
@@ -26,7 +25,7 @@ data class PortfolioContent(
     val faq: List<Pair<String, String>>,
     val contact: List<ContactItem>,
 
-    // 2. [MỚI] DATA TIÊU ĐỀ SECTION (Để khớp với HomeScreen)
+    // [MỚI] TIÊU ĐỀ SECTION
     val sec_01_about: String,
     val sec_02_profile: String,
     val sec_03_cert: String,
@@ -39,7 +38,21 @@ data class PortfolioContent(
     val sec_10_blog: String,
     val sec_11_faq: String,
     val sec_12_contact: String,
-    val btn_view_all: String
+    val btn_view_all: String,
+
+    // [MỚI] THÔNG BÁO DỮ LIỆU TRỐNG (LOCALIZED EMPTY STATES)
+    val msg_no_about: String,
+    val msg_no_profile: String,
+    val msg_no_cert: String,
+    val msg_no_career: String,
+    val msg_no_achievements: String,
+    val msg_no_skills: String,
+    val msg_no_exp: String,
+    val msg_no_proj: String,
+    val msg_no_gallery: String,
+    val msg_no_blog: String,
+    val msg_no_faq: String,
+    val msg_no_contact: String
 )
 
 object SakuraData {
@@ -53,51 +66,20 @@ object SakuraData {
             "role" to "Lập trình viên Đam mê ✨",
             "desc" to "Sinh viên CNTT | Full-stack Developer | Cyber Security Enthusiast."
         ),
-        about = "Tôi là sinh viên năm 3 ngành Công nghệ Thông tin tại trường Đại học Giao thông Vận tải TP.HCM. Với niềm đam mê mãnh liệt về công nghệ, tôi luôn tìm tòi học hỏi các kỹ thuật mới.",
-        profile = listOf(
-            InfoItem("Họ tên", "Vũ Trí Dũng"),
-            InfoItem("Năm sinh", "2005"),
-            InfoItem("Công việc", "Sinh viên / Freelancer"),
-            InfoItem("Địa chỉ", "TP. Hồ Chí Minh")
-        ),
-        skills = listOf(
-            InfoItem("Frontend", "React, Next.js, Jetpack Compose"),
-            InfoItem("Backend", "C#, .NET, Node.js"),
-            InfoItem("Database", "SQL Server, MySQL"),
-            InfoItem("Tools", "Git, Docker, VMware")
-        ),
-        experience = listOf(
-            ExpItem("2023 - Nay", "Nghiên cứu viên", "Lab Mạng Máy Tính (UTH)", listOf("Nghiên cứu hạ tầng mạng SD-WAN.", "Quản trị hệ thống VMware vSphere.")),
-            ExpItem("2024", "Mobile Developer", "DuckTrack App", listOf("Phát triển ứng dụng quản lý công việc.", "Sử dụng Kotlin & Jetpack Compose."))
-        ),
-        projects = listOf(
-            ProjectItem("1", "DuckTrack App", "App quản lý thời gian.", "Android / Kotlin", R.drawable.ic_launcher_foreground),
-            ProjectItem("2", "Sakura Portfolio", "Web cá nhân 3D.", "Next.js / Three.js", R.drawable.ic_launcher_foreground)
-        ),
-        certificates = listOf(
-            SimpleItem("IELTS 6.5", "Tiếng Anh", R.drawable.ic_launcher_foreground),
-            SimpleItem("AWS Cloud", "Practitioner", R.drawable.ic_launcher_foreground)
-        ),
-        career = "Trong 5 năm tới, tôi đặt mục tiêu trở thành một Full-stack Developer chuyên nghiệp và chuyên gia về An ninh mạng (Cybersecurity).",
-        achievements = listOf(
-            SimpleItem("Giải Khuyến Khích", "Olympic Tin học Sinh viên", R.drawable.ic_launcher_foreground),
-            SimpleItem("Top 10", "Dự án Sáng tạo UTH", R.drawable.ic_launcher_foreground)
-        ),
-        blog = listOf(
-            SimpleItem("Cách học Jetpack Compose", "Chia sẻ kinh nghiệm", R.drawable.ic_launcher_foreground)
-        ),
-        gallery = listOf(
-            SimpleItem("Hội thảo Tech", "2024", R.drawable.ic_launcher_foreground)
-        ),
-        faq = listOf(
-            "Bạn có nhận Freelance không?" to "Có, mình luôn sẵn sàng!",
-            "Tech stack chính là gì?" to "Mình chuyên về .NET và React/Next.js."
-        ),
-        contact = listOf(
-            ContactItem("Email", "dungvutri25@gmail.com", "✉️"),
-            ContactItem("GitHub", "github.com/VuTriDung1123", "🐙")
-        ),
-        // [MỚI] TIÊU ĐỀ SECTION
+        about = "Tôi là sinh viên năm 3 ngành Công nghệ Thông tin...",
+        profile = listOf(), // Giữ nguyên data mẫu của bạn nếu muốn, hoặc để rỗng chờ API
+        skills = listOf(),
+        experience = listOf(),
+        projects = listOf(),
+        certificates = listOf(),
+        career = "",
+        achievements = listOf(),
+        blog = listOf(),
+        gallery = listOf(),
+        faq = listOf(),
+        contact = listOf(),
+
+        // Tiêu đề
         sec_01_about = "01. GIỚI THIỆU",
         sec_02_profile = "02. HỒ SƠ",
         sec_03_cert = "03. CHỨNG CHỈ",
@@ -110,25 +92,30 @@ object SakuraData {
         sec_10_blog = "10. BÀI VIẾT (BLOG)",
         sec_11_faq = "11. HỎI ĐÁP (FAQ)",
         sec_12_contact = "12. LIÊN HỆ",
-        btn_view_all = "Xem tất cả"
+        btn_view_all = "Xem tất cả",
+
+        // [MỚI] Thông báo trống Tiếng Việt
+        msg_no_about = "Đang cập nhật giới thiệu...",
+        msg_no_profile = "Chưa có hồ sơ chi tiết.",
+        msg_no_cert = "Chưa có chứng chỉ nào.",
+        msg_no_career = "Chưa có mục tiêu nghề nghiệp.",
+        msg_no_achievements = "Chưa có thành tựu nổi bật.",
+        msg_no_skills = "Chưa cập nhật kỹ năng.",
+        msg_no_exp = "Chưa có kinh nghiệm làm việc.",
+        msg_no_proj = "Chưa có dự án nào.",
+        msg_no_gallery = "Thư viện ảnh đang trống.",
+        msg_no_blog = "Chưa có bài viết mới.",
+        msg_no_faq = "Chưa có câu hỏi thường gặp.",
+        msg_no_contact = "Chưa có thông tin liên hệ."
     )
 
     // --- 2. TIẾNG ANH (EN) ---
     val en = vi.copy(
         hero = mapOf(
             "name" to "David Miller",
-            "sub_name_1" to "Vu Tri Dung",
-            "sub_name_2" to "Akina Aoi",
-            "greeting" to "HELLO WORLD! 🌸",
-            "role" to "Passionate Developer ✨",
-            "desc" to "IT Student | Full-stack Developer | Cyber Security Enthusiast."
+            "role" to "Passionate Dev ✨", // Tagline tiếng Anh
+            "greeting" to "HELLO WORLD! 🌸"
         ),
-        about = "I am a 3rd-year IT student at HCMC University of Transport (UTH). Passionate about technology and building amazing products.",
-        profile = listOf(InfoItem("Name", "David Miller"), InfoItem("Job", "Student"), InfoItem("Location", "HCMC")),
-        career = "My goal is to become a professional Full-stack Developer and Cybersecurity Expert within the next 5 years.",
-        certificates = listOf(SimpleItem("IELTS 6.5", "English", R.drawable.ic_launcher_foreground), SimpleItem("AWS Cloud", "Practitioner", R.drawable.ic_launcher_foreground)),
-        faq = listOf("Available for Freelance?" to "Yes, I am!", "Main Tech Stack?" to ".NET & React/Next.js"),
-        // Tiêu đề EN
         sec_01_about = "01. ABOUT ME",
         sec_02_profile = "02. PROFILE",
         sec_03_cert = "03. CERTIFICATES",
@@ -141,25 +128,30 @@ object SakuraData {
         sec_10_blog = "10. BLOG",
         sec_11_faq = "11. FAQ",
         sec_12_contact = "12. CONTACT",
-        btn_view_all = "View All"
+        btn_view_all = "View All",
+
+        // [MỚI] Thông báo trống Tiếng Anh
+        msg_no_about = "Updating introduction...",
+        msg_no_profile = "No profile details yet.",
+        msg_no_cert = "No certificates found.",
+        msg_no_career = "No career goals yet.",
+        msg_no_achievements = "No achievements yet.",
+        msg_no_skills = "No skills updated.",
+        msg_no_exp = "No work experience yet.",
+        msg_no_proj = "No projects found.",
+        msg_no_gallery = "Gallery is empty.",
+        msg_no_blog = "No posts available.",
+        msg_no_faq = "No FAQs available.",
+        msg_no_contact = "No contact info yet."
     )
 
     // --- 3. TIẾNG NHẬT (JP) ---
     val jp = vi.copy(
         hero = mapOf(
             "name" to "明菜青い (Akina Aoi)",
-            "sub_name_1" to "Vu Tri Dung",
-            "sub_name_2" to "David Miller",
-            "greeting" to "こんにちは！ 🌸",
-            "role" to "情熱的な開発者 ✨",
-            "desc" to "IT学生 | フルスタック開発者 | サイバーセキュリティ愛好家。"
+            "role" to "情熱的な開発者 ✨", // Tagline tiếng Nhật
+            "greeting" to "こんにちは！ 🌸"
         ),
-        about = "ホーチミン市交通大学 (UTH) の情報技術学部の3年生です。技術への強い情熱を持っています。",
-        profile = listOf(InfoItem("氏名", "ヴー・チー・ズン"), InfoItem("職業", "学生"), InfoItem("場所", "ホーチミン市")),
-        career = "今後5年以内に、プロのフルスタック開発者およびサイバーセキュリティの専門家になることを目指しています。",
-        certificates = listOf(SimpleItem("JLPT N3", "日本語", R.drawable.ic_launcher_foreground)),
-        faq = listOf("フリーランスは可能ですか？" to "はい、可能です！", "主な技術スタックは？" to ".NET と React/Next.js"),
-        // Tiêu đề JP
         sec_01_about = "01. 私について",
         sec_02_profile = "02. プロフィール",
         sec_03_cert = "03. 証明書",
@@ -172,6 +164,20 @@ object SakuraData {
         sec_10_blog = "10. ブログ",
         sec_11_faq = "11. よくある質問",
         sec_12_contact = "12. 連絡先",
-        btn_view_all = "すべて見る"
+        btn_view_all = "すべて見る",
+
+        // [MỚI] Thông báo trống Tiếng Nhật
+        msg_no_about = "紹介を更新中...",
+        msg_no_profile = "プロフィール詳細なし。",
+        msg_no_cert = "証明書がありません。",
+        msg_no_career = "キャリア目標なし。",
+        msg_no_achievements = "実績がありません。",
+        msg_no_skills = "スキル未更新。",
+        msg_no_exp = "実務経験なし。",
+        msg_no_proj = "プロジェクトが見つかりません。",
+        msg_no_gallery = "ギャラリーは空です。",
+        msg_no_blog = "投稿はありません。",
+        msg_no_faq = "よくある質問はありません。",
+        msg_no_contact = "連絡先情報なし。"
     )
 }
