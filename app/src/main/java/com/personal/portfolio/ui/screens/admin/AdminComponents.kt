@@ -1,21 +1,19 @@
 package com.personal.portfolio.ui.screens.admin
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.personal.portfolio.data.remote.*
+import com.personal.portfolio.data.remote.* // Import các Model
 import com.personal.portfolio.ui.theme.SakuraPrimary
 import com.personal.portfolio.ui.theme.SakuraSecondary
 
@@ -29,7 +27,6 @@ fun HeroEditor(lang: String, data: HeroData, onUpdate: (HeroData) -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Text("HERO ($lang)", color = SakuraPrimary, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-
             AdminTextField("Greeting", data.greeting) { onUpdate(data.copy(greeting = it)) }
             AdminTextField("Full Name", data.fullName) { onUpdate(data.copy(fullName = it)) }
             Row {
@@ -56,9 +53,16 @@ fun BoxEditor(lang: String, data: List<SectionBox>, onUpdate: (List<SectionBox>)
                 Column(Modifier.padding(vertical = 8.dp).border(1.dp, SakuraSecondary, RoundedCornerShape(8.dp)).padding(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         AdminTextField("Group Title", box.title, Modifier.weight(1f)) {
-                            val newData = data.toMutableList(); newData[bIdx] = box.copy(title = it); onUpdate(newData)
+                            // Deep copy logic để trigger recompose
+                            val newData = data.map { it.copy() }.toMutableList()
+                            newData[bIdx] = box.copy(title = it)
+                            onUpdate(newData)
                         }
-                        IconButton(onClick = { val n = data.toMutableList(); n.removeAt(bIdx); onUpdate(n) }) {
+                        IconButton(onClick = {
+                            val n = data.toMutableList()
+                            n.removeAt(bIdx)
+                            onUpdate(n)
+                        }) {
                             Icon(Icons.Default.Delete, null, tint = Color.Red)
                         }
                     }
@@ -66,25 +70,25 @@ fun BoxEditor(lang: String, data: List<SectionBox>, onUpdate: (List<SectionBox>)
                     box.items.forEachIndexed { iIdx, item ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             AdminTextField("Label", item.label, Modifier.weight(1f)) {
-                                val nData = data.toMutableList()
+                                val nData = data.map { it.copy() }
                                 nData[bIdx].items[iIdx].label = it
-                                onUpdate(nData) // Lưu ý: Cần deep copy nếu state không update, nhưng tạm thời dùng cách này
+                                onUpdate(nData)
                             }
                             Spacer(Modifier.width(4.dp))
                             AdminTextField("Value", item.value, Modifier.weight(1f)) {
-                                val nData = data.toMutableList()
+                                val nData = data.map { it.copy() }
                                 nData[bIdx].items[iIdx].value = it
                                 onUpdate(nData)
                             }
                             IconButton(onClick = {
-                                val nData = data.toMutableList()
+                                val nData = data.map { it.copy() }
                                 nData[bIdx].items.removeAt(iIdx)
                                 onUpdate(nData)
                             }) { Icon(Icons.Default.Delete, null, tint = Color.Gray) }
                         }
                     }
                     TextButton(onClick = {
-                        val nData = data.toMutableList()
+                        val nData = data.map { it.copy() }
                         nData[bIdx].items.add(SectionBoxItem())
                         onUpdate(nData)
                     }) { Text("+ Add Item") }

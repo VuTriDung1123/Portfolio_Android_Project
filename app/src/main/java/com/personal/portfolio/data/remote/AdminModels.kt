@@ -1,23 +1,26 @@
 package com.personal.portfolio.data.remote
 
-// Model cho Post (Blog)
+// --- 1. MODEL CHO POST ---
 data class Post(
     val id: String,
-    val title: String,
-    val tag: String,
-    val language: String,
-    val content: String,
-    val images: String // Lưu JSON string của mảng ảnh
+    var title: String, // var để sửa được
+    var tag: String,
+    var language: String,
+    var content: String,
+    var images: String,
+    val createdAt: String
 )
 
-// Model cho Section Content
+// --- 2. MODEL API RESPONSE ---
 data class SectionData(
-    val contentEn: String,
-    val contentVi: String,
-    val contentJp: String
+    val contentEn: String?,
+    val contentVi: String?,
+    val contentJp: String?
 )
 
-// Model Hero
+// --- 3. MODEL DATA (EDITABLE) ---
+
+// Hero Section
 data class HeroData(
     var fullName: String = "",
     var nickName1: String = "",
@@ -25,33 +28,47 @@ data class HeroData(
     var avatarUrl: String = "",
     var greeting: String = "",
     var description: String = "",
-    var typewriter: String = ""
+    var typewriter: String = "[]"
 )
 
-// Model Box (Profile/Contact)
-data class SectionBoxItem(var label: String = "", var value: String = "")
+// Profile / Contact Box
+data class SectionBoxItem(
+    var label: String = "",
+    var value: String = ""
+)
+
 data class SectionBox(
-    val id: String,
+    val id: String = "",
     var title: String = "",
-    var items: MutableList<SectionBoxItem> = mutableListOf()
+    var items: MutableList<SectionBoxItem> = mutableListOf() // MutableList để dùng .add, .removeAt
 )
 
-// Model Experience
+// Experience
 data class ExpItem(
-    val id: String,
+    val id: String = "",
     var time: String = "",
     var role: String = "",
     var details: MutableList<String> = mutableListOf()
 )
+
 data class ExpGroup(
-    val id: String,
+    val id: String = "",
     var title: String = "",
     var items: MutableList<ExpItem> = mutableListOf()
 )
 
-// Model FAQ
-data class FaqItem(var q: String = "", var a: String = "")
+// FAQ
+data class FaqItem(
+    var q: String = "",
+    var a: String = ""
+)
 
-// Login Request/Response
-data class LoginRequest(val pass: String) // Giả sử API web của bạn check pass
+// Config
+data class GlobalConfig(
+    var resumeUrl: String = "",
+    var isOpenForWork: Boolean = true
+)
+
+// Login
+data class LoginRequest(val pass: String)
 data class LoginResponse(val success: Boolean)

@@ -7,25 +7,39 @@ data class InfoItem(val label: String, val value: String)
 data class ProjectItem(val id: String, val title: String, val desc: String, val tech: String, val imageRes: Int)
 data class ExpItem(val time: String, val role: String, val place: String, val details: List<String>)
 data class ContactItem(val type: String, val value: String, val icon: String)
-// [MỚI] Model cho Blog/Gallery/Cert
 data class SimpleItem(val title: String, val subtitle: String, val imageRes: Int)
 
 // --- DATA HOLDER ---
 data class PortfolioContent(
+    // 1. DATA NỘI DUNG (Cũ)
     val hero: Map<String, String>,
     val about: String,
     val profile: List<InfoItem>,
     val skills: List<InfoItem>,
     val experience: List<ExpItem>,
     val projects: List<ProjectItem>,
-    // [MỚI] Các mục bổ sung
     val certificates: List<SimpleItem>,
     val career: String,
     val achievements: List<SimpleItem>,
     val blog: List<SimpleItem>,
     val gallery: List<SimpleItem>,
-    val faq: List<Pair<String, String>>, // Hỏi - Đáp
-    val contact: List<ContactItem>
+    val faq: List<Pair<String, String>>,
+    val contact: List<ContactItem>,
+
+    // 2. [MỚI] DATA TIÊU ĐỀ SECTION (Để khớp với HomeScreen)
+    val sec_01_about: String,
+    val sec_02_profile: String,
+    val sec_03_cert: String,
+    val sec_04_career: String,
+    val sec_05_achievements: String,
+    val sec_06_skills: String,
+    val sec_07_exp: String,
+    val sec_08_proj: String,
+    val sec_09_gallery: String,
+    val sec_10_blog: String,
+    val sec_11_faq: String,
+    val sec_12_contact: String,
+    val btn_view_all: String
 )
 
 object SakuraData {
@@ -60,10 +74,8 @@ object SakuraData {
             ProjectItem("1", "DuckTrack App", "App quản lý thời gian.", "Android / Kotlin", R.drawable.ic_launcher_foreground),
             ProjectItem("2", "Sakura Portfolio", "Web cá nhân 3D.", "Next.js / Three.js", R.drawable.ic_launcher_foreground)
         ),
-        // [MỚI] Dữ liệu bổ sung
         certificates = listOf(
             SimpleItem("IELTS 6.5", "Tiếng Anh", R.drawable.ic_launcher_foreground),
-            SimpleItem("JLPT N3", "Tiếng Nhật (Đang học)", R.drawable.ic_launcher_foreground),
             SimpleItem("AWS Cloud", "Practitioner", R.drawable.ic_launcher_foreground)
         ),
         career = "Trong 5 năm tới, tôi đặt mục tiêu trở thành một Full-stack Developer chuyên nghiệp và chuyên gia về An ninh mạng (Cybersecurity).",
@@ -72,12 +84,10 @@ object SakuraData {
             SimpleItem("Top 10", "Dự án Sáng tạo UTH", R.drawable.ic_launcher_foreground)
         ),
         blog = listOf(
-            SimpleItem("Cách học Jetpack Compose", "Chia sẻ kinh nghiệm", R.drawable.ic_launcher_foreground),
-            SimpleItem("SD-WAN là gì?", "Kiến thức mạng", R.drawable.ic_launcher_foreground)
+            SimpleItem("Cách học Jetpack Compose", "Chia sẻ kinh nghiệm", R.drawable.ic_launcher_foreground)
         ),
         gallery = listOf(
-            SimpleItem("Hội thảo Tech", "2024", R.drawable.ic_launcher_foreground),
-            SimpleItem("Team Building", "Lab Network", R.drawable.ic_launcher_foreground)
+            SimpleItem("Hội thảo Tech", "2024", R.drawable.ic_launcher_foreground)
         ),
         faq = listOf(
             "Bạn có nhận Freelance không?" to "Có, mình luôn sẵn sàng!",
@@ -86,11 +96,25 @@ object SakuraData {
         contact = listOf(
             ContactItem("Email", "dungvutri25@gmail.com", "✉️"),
             ContactItem("GitHub", "github.com/VuTriDung1123", "🐙")
-        )
+        ),
+        // [MỚI] TIÊU ĐỀ SECTION
+        sec_01_about = "01. GIỚI THIỆU",
+        sec_02_profile = "02. HỒ SƠ",
+        sec_03_cert = "03. CHỨNG CHỈ",
+        sec_04_career = "04. MỤC TIÊU NGHỀ NGHIỆP",
+        sec_05_achievements = "05. THÀNH TỰU",
+        sec_06_skills = "06. KỸ NĂNG",
+        sec_07_exp = "07. KINH NGHIỆM",
+        sec_08_proj = "08. DỰ ÁN",
+        sec_09_gallery = "09. THƯ VIỆN ẢNH",
+        sec_10_blog = "10. BÀI VIẾT (BLOG)",
+        sec_11_faq = "11. HỎI ĐÁP (FAQ)",
+        sec_12_contact = "12. LIÊN HỆ",
+        btn_view_all = "Xem tất cả"
     )
 
     // --- 2. TIẾNG ANH (EN) ---
-    val en = vi.copy( // Copy cấu trúc VI và sửa nội dung
+    val en = vi.copy(
         hero = mapOf(
             "name" to "David Miller",
             "sub_name_1" to "Vu Tri Dung",
@@ -103,7 +127,21 @@ object SakuraData {
         profile = listOf(InfoItem("Name", "David Miller"), InfoItem("Job", "Student"), InfoItem("Location", "HCMC")),
         career = "My goal is to become a professional Full-stack Developer and Cybersecurity Expert within the next 5 years.",
         certificates = listOf(SimpleItem("IELTS 6.5", "English", R.drawable.ic_launcher_foreground), SimpleItem("AWS Cloud", "Practitioner", R.drawable.ic_launcher_foreground)),
-        faq = listOf("Available for Freelance?" to "Yes, I am!", "Main Tech Stack?" to ".NET & React/Next.js")
+        faq = listOf("Available for Freelance?" to "Yes, I am!", "Main Tech Stack?" to ".NET & React/Next.js"),
+        // Tiêu đề EN
+        sec_01_about = "01. ABOUT ME",
+        sec_02_profile = "02. PROFILE",
+        sec_03_cert = "03. CERTIFICATES",
+        sec_04_career = "04. CAREER GOALS",
+        sec_05_achievements = "05. ACHIEVEMENTS",
+        sec_06_skills = "06. SKILLS",
+        sec_07_exp = "07. EXPERIENCE",
+        sec_08_proj = "08. PROJECTS",
+        sec_09_gallery = "09. GALLERY",
+        sec_10_blog = "10. BLOG",
+        sec_11_faq = "11. FAQ",
+        sec_12_contact = "12. CONTACT",
+        btn_view_all = "View All"
     )
 
     // --- 3. TIẾNG NHẬT (JP) ---
@@ -120,6 +158,20 @@ object SakuraData {
         profile = listOf(InfoItem("氏名", "ヴー・チー・ズン"), InfoItem("職業", "学生"), InfoItem("場所", "ホーチミン市")),
         career = "今後5年以内に、プロのフルスタック開発者およびサイバーセキュリティの専門家になることを目指しています。",
         certificates = listOf(SimpleItem("JLPT N3", "日本語", R.drawable.ic_launcher_foreground)),
-        faq = listOf("フリーランスは可能ですか？" to "はい、可能です！", "主な技術スタックは？" to ".NET と React/Next.js")
+        faq = listOf("フリーランスは可能ですか？" to "はい、可能です！", "主な技術スタックは？" to ".NET と React/Next.js"),
+        // Tiêu đề JP
+        sec_01_about = "01. 私について",
+        sec_02_profile = "02. プロフィール",
+        sec_03_cert = "03. 証明書",
+        sec_04_career = "04. キャリア目標",
+        sec_05_achievements = "05. 実績",
+        sec_06_skills = "06. スキル",
+        sec_07_exp = "07. 経験",
+        sec_08_proj = "08. プロジェクト",
+        sec_09_gallery = "09. ギャラリー",
+        sec_10_blog = "10. ブログ",
+        sec_11_faq = "11. よくある質問",
+        sec_12_contact = "12. 連絡先",
+        btn_view_all = "すべて見る"
     )
 }
