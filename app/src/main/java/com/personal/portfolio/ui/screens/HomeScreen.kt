@@ -44,6 +44,7 @@ import com.personal.portfolio.ui.screens.admin.AdminScreen
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
@@ -105,7 +106,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White.copy(alpha = 0.9f))
+                                // [CHỈNH SỬA] Màu hồng nhạt (SakuraBg)
+                                .background(Color(0xFFFFE4E1).copy(alpha = 0.95f))
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -141,7 +143,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     )
                                 }
                             }
-                            // Cụm Phải: Dropdown
+                            // Cụm Phải
                             LanguageDropdown(currentLang = currentLang, onLangSelect = { switchLanguage(it) })
                         }
                     },
@@ -155,33 +157,84 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
-                        // 1. HERO SECTION (ĐÃ NÂNG CẤP)
+                        // 1. HERO SECTION (DẠNG DỌC - VERTICAL POP-OUT)
                         item {
                             if (uiState.hero.fullName.isNotEmpty()) {
-                                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp).clip(RoundedCornerShape(20.dp)).background(Brush.linearGradient(listOf(Color(0xFFFFE4E1), Color(0xFFFFF0F5))))) {
-                                    Icon(painter = painterResource(R.drawable.sakura_avatar), contentDescription = null, tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(300.dp).align(Alignment.CenterEnd).offset(x = 50.dp))
+                                // HỘP CHỨA TỔNG (Căn giữa, giảm khoảng cách với TopBar)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp, bottom = 20.dp) // [SỬA] Giảm top xuống 10dp cho gần TopBar
+                                ) {
+                                    // A. LỚP NỀN (BACKGROUND CARD)
+                                    // Nằm thấp xuống 60dp để nhường chỗ cho Avatar ở trên
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 60.dp) // Đẩy nền xuống để Avatar lòi ra ở trên
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(
+                                                brush = Brush.linearGradient(
+                                                    listOf(Color(0xFFFFE4E1), Color(0xFFFFF0F5))
+                                                )
+                                            )
+                                    ) {
+                                        // Background trang trí
+                                        Icon(
+                                            painter = painterResource(R.drawable.sakura_avatar),
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.4f),
+                                            modifier = Modifier
+                                                .size(400.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .offset(y = 50.dp)
+                                        )
 
-                                    Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-
-                                        // CỘT TRÁI: TEXT INFO
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            // Greeting Pill
-                                            Surface(color = Color.White, shape = RoundedCornerShape(20.dp), shadowElevation = 1.dp) {
-                                                Text(uiState.hero.greeting, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), color = SakuraPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        // B. NỘI DUNG TEXT (Nằm trong card, đẩy xuống dưới Avatar)
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 80.dp, bottom = 20.dp, start = 16.dp, end = 16.dp), // Padding top 80dp để không đè Avatar
+                                            horizontalAlignment = Alignment.CenterHorizontally // [QUAN TRỌNG] Căn giữa toàn bộ
+                                        ) {
+                                            // Greeting
+                                            Surface(
+                                                color = Color.White,
+                                                shape = RoundedCornerShape(20.dp),
+                                                shadowElevation = 1.dp
+                                            ) {
+                                                Text(
+                                                    text = uiState.hero.greeting,
+                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                                    color = SakuraPrimary,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
                                             }
-                                            Spacer(Modifier.height(10.dp))
+                                            Spacer(Modifier.height(12.dp))
 
-                                            // Main Name
-                                            Text(uiState.hero.fullName, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = SakuraTextDark)
+                                            // Tên chính
+                                            Text(
+                                                text = uiState.hero.fullName,
+                                                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Black), // Chữ to hơn chút
+                                                color = SakuraTextDark,
+                                                textAlign = TextAlign.Center
+                                            )
 
-                                            // [MỚI] 1. SUB-NAMES (Badge EN/JP giống Web)
-                                            Row(modifier = Modifier.padding(vertical = 8.dp).horizontalScroll(rememberScrollState())) {
-                                                // Fallback lấy từ staticData nếu API chưa có
+                                            // Badges (Tên phụ)
+                                            Row(
+                                                modifier = Modifier
+                                                    .padding(vertical = 12.dp)
+                                                    .horizontalScroll(rememberScrollState()),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
                                                 val enName = if(uiState.hero.nickName1.isNotEmpty()) uiState.hero.nickName1 else staticText.hero["sub_name_1"]
                                                 val jpName = if(uiState.hero.nickName2.isNotEmpty()) uiState.hero.nickName2 else staticText.hero["sub_name_2"]
 
                                                 if (!enName.isNullOrEmpty()) {
                                                     NicknameBadge(label = "EN", name = enName)
+                                                }
+                                                if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) {
                                                     Spacer(Modifier.width(8.dp))
                                                 }
                                                 if (!jpName.isNullOrEmpty()) {
@@ -189,37 +242,92 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 }
                                             }
 
-                                            // [MỚI] 2. TYPEWRITER EFFECT (Chữ chạy)
+                                            // Typewriter (Chữ chạy)
                                             val typePrefix = when(currentLang) {
                                                 "vi" -> "Tôi là "
-                                                "jp" -> "私は" // Watashi wa
+                                                "jp" -> "私は"
                                                 else -> "I am a "
                                             }
-
                                             TypewriterText(
-                                                prefix = typePrefix, // Truyền vào đây
+                                                prefix = typePrefix,
                                                 texts = when(currentLang) {
                                                     "vi" -> listOf("Lập trình viên", "Sinh viên CNTT", "Yêu công nghệ")
                                                     "jp" -> listOf("開発者", "学生", "技術愛好家")
                                                     else -> listOf("Developer", "IT Student", "Tech Enthusiast")
                                                 },
-                                                modifier = Modifier.padding(bottom = 12.dp)
+                                                modifier = Modifier.padding(bottom = 20.dp)
                                             )
 
-                                            // Buttons
-                                            Row {
-                                                Button(onClick = { navController.navigate("blog") }, colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) { Text("Project", fontSize = 12.sp) }
-                                                Spacer(Modifier.width(8.dp))
-                                                OutlinedButton(onClick = { navController.navigate("faq") }, colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraTextDark), border = androidx.compose.foundation.BorderStroke(1.dp, Color.White), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) { Text("FAQ", fontSize = 12.sp) }
+                                            // Buttons (Nằm ngang ở dưới cùng)
+                                            Row(
+                                                horizontalArrangement = Arrangement.Center,
+                                                verticalAlignment = Alignment.CenterVertically, // Căn giữa theo chiều dọc
+                                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                            ) {
+                                                // 1. NÚT PROJECT
+                                                Button(
+                                                    onClick = { navController.navigate("blog") },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                ) { Text("Project", fontSize = 13.sp) }
+
+                                                Spacer(Modifier.width(8.dp)) // Khoảng cách
+
+                                                // 2. [MỚI] NÚT TẢI CV
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        // TODO: Thêm link tải CV vào đây
+                                                        // uriHandler.openUri("https://link-to-your-cv.com")
+                                                    },
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraPrimary),
+                                                    border = androidx.compose.foundation.BorderStroke(1.dp, SakuraPrimary),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Text("CV", fontSize = 13.sp)
+                                                }
+
+                                                Spacer(Modifier.width(8.dp)) // Khoảng cách
+
+                                                // 3. NÚT FAQ
+                                                OutlinedButton(
+                                                    onClick = { navController.navigate("faq") },
+                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraTextDark),
+                                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                ) { Text("FAQ", fontSize = 13.sp) }
                                             }
                                         }
+                                    }
 
-                                        // CỘT PHẢI: AVATAR
-                                        Box(modifier = Modifier.size(130.dp), contentAlignment = Alignment.Center) {
-                                            val painter = if (uiState.hero.avatarUrl.isNotEmpty()) rememberAsyncImagePainter(uiState.hero.avatarUrl) else painterResource(R.drawable.vutridung)
-                                            Image(painter = painter, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(125.dp).clip(CircleShape).border(3.dp, Color.White, CircleShape))
-                                            Image(painter = painterResource(R.drawable.sakura_avatar), contentDescription = null, modifier = Modifier.fillMaxSize().scale(1.2f))
-                                        }
+                                    // C. AVATAR (NẰM TRÊN CÙNG - CĂN GIỮA)
+                                    // Không cần offset âm nữa, vì ta đã đẩy background xuống
+                                    Box(
+                                        modifier = Modifier
+                                            .size(130.dp)
+                                            .align(Alignment.TopCenter), // [QUAN TRỌNG] Căn giữa đỉnh
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val painter = if (uiState.hero.avatarUrl.isNotEmpty())
+                                            rememberAsyncImagePainter(uiState.hero.avatarUrl)
+                                        else
+                                            painterResource(R.drawable.vutridung)
+
+                                        Image(
+                                            painter = painter,
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(130.dp)
+                                                .clip(CircleShape)
+                                                .border(4.dp, Color.White, CircleShape)
+                                        )
+                                        Image(
+                                            painter = painterResource(R.drawable.sakura_avatar),
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize().scale(1.25f)
+                                        )
                                     }
                                 }
                             } else {
@@ -252,7 +360,6 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 // CÁC COMPONENT PHỤ TRỢ (HELPER COMPONENTS)
 // ------------------------------------------------------------------------
 
-// [MỚI] Badge Tên phụ (Giống Web)
 @Composable
 fun NicknameBadge(label: String, name: String) {
     Row(
@@ -268,7 +375,6 @@ fun NicknameBadge(label: String, name: String) {
     }
 }
 
-// [MỚI] Hiệu ứng chữ chạy (Typewriter)
 @Composable
 fun TypewriterText(prefix: String, texts: List<String>, modifier: Modifier = Modifier) {
     var textIndex by remember { mutableStateOf(0) }
