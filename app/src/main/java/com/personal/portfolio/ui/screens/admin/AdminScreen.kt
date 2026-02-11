@@ -27,7 +27,6 @@ import com.personal.portfolio.ui.theme.SakuraPrimary
 import com.personal.portfolio.ui.theme.SakuraSecondary
 import kotlinx.coroutines.launch
 
-// [MỚI] Thêm tham số onGoBack để quay về trang chủ
 @Composable
 fun AdminScreen(onGoBack: () -> Unit) {
     val context = LocalContext.current
@@ -56,20 +55,25 @@ fun AdminScreen(onGoBack: () -> Unit) {
         scope.launch {
             isLoading = true
             try {
+                // [FIX] Gọi hàm getSectionContent
                 val data = RetrofitClient.api.getSectionContent(sectionKey)
                 if (data != null) {
                     val gson = Gson()
                     if (sectionKey == "hero") {
-                        heroEn = gson.fromJson(data.contentEn, HeroData::class.java) ?: HeroData()
-                        heroVi = gson.fromJson(data.contentVi, HeroData::class.java) ?: HeroData()
-                        heroJp = gson.fromJson(data.contentJp, HeroData::class.java) ?: HeroData()
+                        // [FIX] Handle nullable contentEn/Vi/Jp
+                        heroEn = if (!data.contentEn.isNullOrEmpty()) gson.fromJson(data.contentEn, HeroData::class.java) else HeroData()
+                        heroVi = if (!data.contentVi.isNullOrEmpty()) gson.fromJson(data.contentVi, HeroData::class.java) else HeroData()
+                        heroJp = if (!data.contentJp.isNullOrEmpty()) gson.fromJson(data.contentJp, HeroData::class.java) else HeroData()
                     } else if (sectionKey == "profile") {
-                        boxesEn = gson.fromJson(data.contentEn, Array<SectionBox>::class.java).toList()
-                        boxesVi = gson.fromJson(data.contentVi, Array<SectionBox>::class.java).toList()
-                        boxesJp = gson.fromJson(data.contentJp, Array<SectionBox>::class.java).toList()
+                        // [FIX] Parse Array to List an toàn
+                        boxesEn = if (!data.contentEn.isNullOrEmpty()) gson.fromJson(data.contentEn, Array<SectionBox>::class.java).toMutableList() else emptyList()
+                        boxesVi = if (!data.contentVi.isNullOrEmpty()) gson.fromJson(data.contentVi, Array<SectionBox>::class.java).toMutableList() else emptyList()
+                        boxesJp = if (!data.contentJp.isNullOrEmpty()) gson.fromJson(data.contentJp, Array<SectionBox>::class.java).toMutableList() else emptyList()
                     }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             isLoading = false
         }
     }
@@ -80,8 +84,6 @@ fun AdminScreen(onGoBack: () -> Unit) {
         SakuraFallingEffect()
 
         if (!isAuth) {
-            // --- MÀN HÌNH LOGIN ---
-            // [MỚI] Nút Back ở góc trái trên màn hình Login
             IconButton(
                 onClick = onGoBack,
                 modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
@@ -115,7 +117,6 @@ fun AdminScreen(onGoBack: () -> Unit) {
                 }
             }
         } else {
-            // --- DASHBOARD ---
             Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(12.dp)).padding(12.dp),
@@ -123,8 +124,6 @@ fun AdminScreen(onGoBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("🌸 DASHBOARD", fontWeight = FontWeight.Bold, color = SakuraPrimary)
-
-                    // [MỚI] Nút Thoát
                     IconButton(onClick = onGoBack) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Exit", tint = Color.Red)
                     }
@@ -132,7 +131,6 @@ fun AdminScreen(onGoBack: () -> Unit) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // Menu Tabs
                 Row {
                     Button(onClick = { activeTab = "content" }, colors = ButtonDefaults.buttonColors(containerColor = if(activeTab=="content") SakuraPrimary else Color.Gray)) { Text("SECTIONS") }
                     Spacer(Modifier.width(8.dp))
