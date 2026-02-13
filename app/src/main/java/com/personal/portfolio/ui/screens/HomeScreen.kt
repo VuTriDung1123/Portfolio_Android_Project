@@ -336,16 +336,100 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
 
                         // ... CÁC SECTION KHÁC GIỮ NGUYÊN ...
+                        // 2. ABOUT SECTION
                         item { SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) } }
+
+                        // 3. PROFILE SECTION
                         item { SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) } }
-                        item { SectionCard(staticText.sec_03_cert) { if(uiState.certificates.isNotEmpty()) Text(uiState.certificates, color = SakuraTextDark) else EmptyData(staticText.msg_no_cert) } }
+
+                        // 4. CERTIFICATES SECTION (CHIA 3 LOẠI VUỐT NGANG)
+                        item {
+                            SectionCard(staticText.sec_03_cert) {
+                                Column {
+                                    // Loại 1: IT Certificates
+                                    val itCerts = uiState.allPosts.filter { it.tag.lowercase() == "tech_certs" }
+                                    HorizontalPostLane(title = "❖ IT Certificates", posts = itCerts, navController = navController)
+
+                                    Spacer(Modifier.height(16.dp))
+
+                                    // Loại 2: Language Certificates
+                                    val langCerts = uiState.allPosts.filter { it.tag.lowercase() == "lang_certs" }
+                                    HorizontalPostLane(title = "❖ Language Certificates", posts = langCerts, navController = navController)
+
+                                    Spacer(Modifier.height(16.dp))
+
+                                    // Loại 3: Other Certificates
+                                    val otherCerts = uiState.allPosts.filter { it.tag.lowercase() == "other_certs" }
+                                    HorizontalPostLane(title = "❖ Other Certificates", posts = otherCerts, navController = navController)
+                                }
+                            }
+                        }
+
+                        // 5. CAREER SECTION
                         item { SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) } }
-                        item { SectionCard(staticText.sec_05_achievements) { if(uiState.achievements.isNotEmpty()) Text(uiState.achievements, color = SakuraTextDark) else EmptyData(staticText.msg_no_achievements) } }
+
+                        // 6. ACHIEVEMENTS SECTION (VUỐT NGANG)
+                        item {
+                            SectionCard(staticText.sec_05_achievements) {
+                                val achievements = uiState.allPosts.filter { it.tag.lowercase() == "achievements" }
+                                HorizontalPostLane(posts = achievements, navController = navController)
+                            }
+                        }
+
+                        // 7. SKILLS SECTION
                         item { SectionCard(staticText.sec_06_skills) { if(uiState.skills.isNotEmpty()) Text(uiState.skills, color = SakuraTextDark) else EmptyData(staticText.msg_no_skills) } }
-                        item { SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) } }
-                        item { SectionCard(staticText.sec_08_proj) { val projs = uiState.allPosts.filter { it.tag.contains("project") }.take(3); if (projs.isNotEmpty()) { projs.forEach { ProjectPostCard(it, simple = true); Spacer(Modifier.height(8.dp)) }; TextButton(onClick = { navController.navigate("blog") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_proj) } }
-                        item { SectionCard(staticText.sec_09_gallery) { if(uiState.gallery.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState())) { uiState.gallery.forEach { url -> Image(painter = rememberAsyncImagePainter(url), contentDescription = null, modifier = Modifier.size(120.dp).padding(end=8.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop) } } else EmptyData(staticText.msg_no_gallery) } }
-                        item { SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag.contains("project") }.take(3); if (blogs.isNotEmpty()) { blogs.forEach { ProjectPostCard(it, simple = true); Spacer(Modifier.height(8.dp)) }; TextButton(onClick = { navController.navigate("blog") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_blog) } }
+
+                        // 8. EXPERIENCE SECTION
+                        item { SectionCard(staticText.sec_07_exp) { /* Giữ nguyên UI Timeline cũ vì đặc thù của Exp */ } }
+
+                        // 9. PROJECTS SECTION (CHIA 2 LOẠI VUỐT NGANG)
+                        item {
+                            SectionCard(staticText.sec_08_proj) {
+                                Column {
+                                    val uniProjs = uiState.allPosts.filter { it.tag.lowercase() == "uni_projects" }
+                                    HorizontalPostLane(title = "❖ University Projects", posts = uniProjs, navController = navController)
+
+                                    Spacer(Modifier.height(16.dp))
+
+                                    val perProjs = uiState.allPosts.filter { it.tag.lowercase() == "personal_projects" }
+                                    HorizontalPostLane(title = "❖ Personal Projects", posts = perProjs, navController = navController)
+                                }
+                            }
+                        }
+
+                        // 10. GALLERY / IT EVENTS (VUỐT NGANG)
+                        item {
+                            SectionCard(staticText.sec_09_gallery) {
+                                val itEvents = uiState.allPosts.filter { it.tag.lowercase() == "it_events" }
+                                HorizontalPostLane(posts = itEvents, navController = navController)
+                            }
+                        }
+
+
+                        item {
+                            SectionCard(staticText.sec_10_blog) {
+                                val blogs = uiState.allPosts.filter { !it.tag.lowercase().contains("project") }.take(3)
+                                if (blogs.isNotEmpty()) {
+                                    Column {
+                                        // Dãy vuốt ngang
+                                        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                                            blogs.forEach { post ->
+                                                HomePostCard(post, navController)
+                                            }
+                                        }
+                                        // Nút xem tất cả
+                                        TextButton(
+                                            onClick = { navController.navigate("blog") },
+                                            modifier = Modifier.align(Alignment.End)
+                                        ) {
+                                            Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else {
+                                    EmptyData(staticText.msg_no_blog)
+                                }
+                            }
+                        }
                         item { SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) } }
                         item { SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) } }
                     }
@@ -497,5 +581,93 @@ fun ContactRowWrapper(label: String, value: String) {
         val icon = when { label.contains("Mail", true) || label.contains("Email", true) -> "✉️"; label.contains("Phone", true) || label.contains("Tel", true) -> "📞"; label.contains("Git", true) -> "🐙"; label.contains("Linked", true) -> "💼"; else -> "🌐" }
         Text(icon, fontSize = 20.sp); Spacer(Modifier.width(12.dp))
         Column { Text(label, fontSize = 11.sp, color = SakuraTextLight); Text(value, fontSize = 14.sp, color = SakuraTextDark, fontWeight = FontWeight.SemiBold) }
+    }
+}
+
+@Composable
+fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: NavController) {
+    Card(
+        modifier = Modifier
+            .width(280.dp) // Độ rộng cố định để vuốt ngang đẹp
+            .padding(end = 12.dp)
+            .clickable { navController.navigate("post_detail/${post.id}") },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column {
+            // 1. Ảnh Thumbnail
+            val imageList = try {
+                if (post.images.contains("http")) post.images.replace("[\"", "").replace("\"]", "").split("\",\"")[0]
+                else ""
+            } catch (e: Exception) { "" }
+
+            if (imageList.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageList.trim()),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxWidth().height(140.dp).background(SakuraGlass), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Image, null, tint = SakuraSecondary)
+                }
+            }
+
+            // 2. Nội dung text
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = post.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SakuraTextDark,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(4.dp))
+                Surface(color = SakuraPrimary, shape = RoundedCornerShape(4.dp)) {
+                    Text(
+                        text = post.tag,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HorizontalPostLane(
+    title: String? = null,
+    posts: List<com.personal.portfolio.data.remote.Post>,
+    navController: NavController
+) {
+    Column {
+        if (title != null) {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = SakuraTextDark,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        if (posts.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                posts.forEach { post ->
+                    HomePostCard(post = post, navController = navController)
+                }
+            }
+        } else {
+            Text("Chưa có dữ liệu 🍃", fontSize = 12.sp, color = SakuraTextLight, modifier = Modifier.padding(start = 8.dp))
+        }
     }
 }
