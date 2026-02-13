@@ -1,98 +1,78 @@
 package com.personal.portfolio.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.* // Quan trọng để dùng collectAsState()
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
-import com.google.gson.Gson
-import com.personal.portfolio.ui.theme.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController // Phải dùng NavController
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class) // [FIX] Thêm OptIn
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostDetailScreen(navController: NavController, viewModel: HomeViewModel, postId: String) {
-    val post = viewModel.getPostById(postId)
+fun PostDetailScreen(
+    postId: String?,
+    navController: NavController, // Sửa kiểu dữ liệu ở đây
+    viewModel: HomeViewModel = viewModel() // Sửa kiểu dữ liệu ở đây
+) {
+    // Thu thập State từ ViewModel - Cần "import androidx.compose.runtime.getValue"
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Tìm bài viết khớp với ID
+    val post = uiState.allPosts.find { it.id == postId }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(post?.title ?: "Chi tiết", maxLines = 1) },
+                title = { Text(post?.title ?: "Loading...", fontSize = 18.sp) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.popBackStack() }) { // Bây giờ popBackStack đã hiểu
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = SakuraGlass)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFFE4E1))
             )
         }
     ) { padding ->
-        if (post == null) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) { Text("Không tìm thấy bài viết!") }
-        } else {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // Ảnh Cover
-                val imgUrl = try {
-                    val list = Gson().fromJson(post.images, Array<String>::class.java)
-                    if (list.isNotEmpty()) list[0] else null
-                } catch (e: Exception) { null }
-
-                if (imgUrl != null) {
-                    Image(
-                        painter = rememberAsyncImagePainter(imgUrl),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(15.dp))
-                    )
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // Tag & Title
-                Text(
-                    text = post.tag,
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    modifier = Modifier.background(SakuraPrimary, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-                Spacer(Modifier.height(10.dp))
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            if (post != null) {
                 Text(
                     text = post.title,
-                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = SakuraTextDark
+                    color = Color(0xFF4A4A4A)
                 )
-                Spacer(Modifier.height(16.dp))
-
-                // Nội dung
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Ngày đăng: ${post.createdAt}",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(
                     text = post.content,
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     lineHeight = 26.sp,
-                    color = SakuraTextMain // Đã khai báo trong Color.kt
+                    color = Color(0xFF4A4A4A)
                 )
+            } else {
+                Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text("Không tìm thấy nội dung bài viết.")
+                }
             }
         }
     }

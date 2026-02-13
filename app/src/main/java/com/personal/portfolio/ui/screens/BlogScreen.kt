@@ -4,12 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,10 +16,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,14 +27,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.personal.portfolio.R
 import com.personal.portfolio.data.SakuraData
 import com.personal.portfolio.data.remote.Post
 import com.personal.portfolio.ui.components.SakuraFallingEffect
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
@@ -272,7 +265,7 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
                     } else {
                         items(displayedPosts) { post ->
-                            BlogPostCard(post)
+                            BlogPostCard(post, navController)
                             Spacer(Modifier.height(16.dp))
                         }
                     }
@@ -284,11 +277,13 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
 // --- COMPONENT: BLOG POST CARD (Giống mẫu) ---
 @Composable
-fun BlogPostCard(post: Post) {
+fun BlogPostCard(post: Post, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* TODO: Navigate to Detail */ },
+            .clickable {
+                navController.navigate("post_detail/${post.id}")
+            },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
