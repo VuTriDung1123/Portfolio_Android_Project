@@ -9,9 +9,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
+import com.personal.portfolio.BuildConfig
 
+// --- 1. STATE QUẢN LÝ GIAO DIỆN ---
 data class HomeUiState(
-    val isLoading: Boolean = false, // Chỉ true khi mở app lần đầu
+    val isLoading: Boolean = false,
     val error: String? = null,
     val currentLanguage: String = "vi",
     val hero: HeroData = HeroData(),
@@ -25,10 +29,15 @@ data class HomeUiState(
     val certificates: String = "",
     val achievements: String = "",
     val gallery: List<String> = emptyList(),
-
     val allPosts: List<Post> = emptyList(),
     val filteredPosts: List<Post> = emptyList(),
     val selectedTag: String = "ALL"
+)
+
+// --- 2. MODEL CHAT (Chỉ khai báo 1 lần duy nhất ở đây) ---
+data class ChatMessage(
+    val text: String,
+    val isUser: Boolean
 )
 
 class HomeViewModel : ViewModel() {
@@ -36,32 +45,50 @@ class HomeViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
     private val gson = Gson()
 
+    // Khởi tạo Gemini AI dùng Key bảo mật từ BuildConfig
+    private val generativeModel = GenerativeModel(
+        // Sử dụng đúng tên 'name' từ danh sách JSON bạn gửi
+        modelName = "models/gemini-3-flash-preview",
+        apiKey = BuildConfig.GEMINI_API_KEY
+    )
+
+    private val _chatHistory = MutableStateFlow(listOf<ChatMessage>())
+    val chatHistory = _chatHistory.asStateFlow()
+
+    // --- XỬ LÝ NGÔN NGỮ ---
     fun setLanguage(lang: String) {
         if (_uiState.value.currentLanguage != lang) {
             _uiState.value = _uiState.value.copy(currentLanguage = lang)
-            loadAllData(lang) // Tự động tải lại data mới
+            loadAllData(lang)
         }
     }
 
+    // --- TẢI DỮ LIỆU ĐỘNG TỪ DATABASE (Đồng bộ với bản Web) ---
     fun loadAllData(lang: String = "vi") {
         viewModelScope.launch {
-
             val isFirstLoad = _uiState.value.hero.fullName.isEmpty()
             if (isFirstLoad) {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             }
 
             try {
-                // Các bước gọi API giữ nguyên, chạy ngầm
-                val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() } }
+                // Chạy lấy danh sách bài viết ngầm để tối ưu tốc độ
+                val postsDeferred = async {
+                    try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() }
+                }
 
                 suspend fun fetchRawJson(key: String): String? {
                     val res = try { RetrofitClient.api.getSectionContent(key) } catch (e: Exception) { null }
                     return if (res != null) {
-                        when(lang) { "en" -> res.contentEn; "jp" -> res.contentJp; else -> res.contentVi }
+                        when(lang) {
+                            "en" -> res.contentEn
+                            "jp" -> res.contentJp
+                            else -> res.contentVi
+                        }
                     } else null
                 }
 
+                // Lấy các mục nội dung hệ thống
                 val heroJson = fetchRawJson("hero")
                 val aboutJson = fetchRawJson("about")
                 val careerJson = fetchRawJson("career")
@@ -74,6 +101,7 @@ class HomeViewModel : ViewModel() {
                 val achiJson = fetchRawJson("achievements")
                 val galleryJson = fetchRawJson("gallery")
 
+                // Chuyển đổi JSON sang Object tương ứng
                 val heroData = if(!heroJson.isNullOrEmpty()) gson.fromJson(heroJson, HeroData::class.java) else HeroData()
                 val profileList = if(!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(profileJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
@@ -83,8 +111,8 @@ class HomeViewModel : ViewModel() {
 
                 val allPosts = postsDeferred.await()
 
-                _uiState.value = HomeUiState(
-                    isLoading = false, // Tắt loading (nếu đang bật)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
                     hero = heroData,
                     currentLanguage = lang,
                     about = aboutJson ?: "",
@@ -100,11 +128,39 @@ class HomeViewModel : ViewModel() {
                     allPosts = allPosts,
                     filteredPosts = allPosts
                 )
-                filterPosts("ALL")
+                filterPosts(_uiState.value.selectedTag)
 
             } catch (e: Exception) {
-                e.printStackTrace()
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+            }
+        }
+    }
+
+    // --- KẾT NỐI GEMINI AI (Sử dụng Persona Sakura từ bản Web) ---
+    fun sendMessage(userPrompt: String) {
+        viewModelScope.launch {
+            val currentList = _chatHistory.value.toMutableList()
+            currentList.add(ChatMessage(userPrompt, isUser = true))
+            _chatHistory.value = currentList
+
+            try {
+                val response = generativeModel.generateContent(
+                    content {
+                        text("Bạn là Sakura AI, trợ lý ảo của Vũ Trí Dũng. Hãy trả lời thân thiện, sử dụng icon hoa anh đào 🌸.")
+                        text(userPrompt)
+                    }
+                )
+
+                val botResponse = response.text ?: "Sakura chưa nghĩ ra câu trả lời... 🌸"
+                val updatedList = _chatHistory.value.toMutableList()
+                updatedList.add(ChatMessage(botResponse, isUser = false))
+                _chatHistory.value = updatedList
+
+            } catch (e: Exception) {
+                // [SỬA TẠI ĐÂY] Hiện lỗi chi tiết để debug
+                val errorList = _chatHistory.value.toMutableList()
+                errorList.add(ChatMessage("Lỗi: ${e.localizedMessage} 🌸", isUser = false))
+                _chatHistory.value = errorList
             }
         }
     }
@@ -114,5 +170,6 @@ class HomeViewModel : ViewModel() {
         val filtered = if (tag == "ALL") currentPosts else currentPosts.filter { it.tag == tag }
         _uiState.value = _uiState.value.copy(filteredPosts = filtered, selectedTag = tag)
     }
+
     fun getPostById(postId: String): Post? = _uiState.value.allPosts.find { it.id == postId }
 }

@@ -45,6 +45,9 @@ import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import com.personal.portfolio.ui.viewmodel.ChatMessage
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
@@ -538,24 +541,86 @@ fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
 }
 
 @Composable
-fun ChatDialog(onDismiss: () -> Unit) {
+fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
+    val chatHistory by viewModel.chatHistory.collectAsState()
+    var userText by remember { mutableStateOf("") }
+    val scrollState = rememberLazyListState()
+
+
+    // Tự động cuộn xuống khi có tin nhắn mới
+    LaunchedEffect(chatHistory.size) {
+        if (chatHistory.isNotEmpty()) scrollState.animateScrollToItem(chatHistory.size - 1)
+    }
+
     Dialog(onDismissRequest = onDismiss) {
-        Card(modifier = Modifier.fillMaxWidth().height(500.dp), shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+        Card(
+            modifier = Modifier.fillMaxWidth().height(550.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                Row(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(SakuraPrimary, SakuraSecondary))).padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(verticalAlignment = Alignment.CenterVertically) { Text("🤖", fontSize = 24.sp); Spacer(Modifier.width(8.dp)); Text("Sakura AI", color = Color.White, fontWeight = FontWeight.Bold) }
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White) }
+                // Header (Giữ nguyên UI Sakura cũ)
+                Row(modifier = Modifier.fillMaxWidth().background(SakuraPrimary).padding(16.dp)) {
+                    Text("🌸 Sakura AI Assistant", color = Color.White, fontWeight = FontWeight.Bold)
                 }
-                Column(modifier = Modifier.weight(1f).background(Color(0xFFFFF0F5)).padding(16.dp), verticalArrangement = Arrangement.Bottom) {
-                    Surface(shape = MaterialTheme.shapes.medium, color = Color.White, modifier = Modifier.padding(bottom = 8.dp).fillMaxWidth(0.8f), shadowElevation = 2.dp) {
-                        Text("Xin chào! 🌸 Mình là trợ lý ảo của Dũng. Bạn cần giúp gì không?", modifier = Modifier.padding(12.dp), color = SakuraTextDark)
+
+                // Danh sách tin nhắn động
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.weight(1f).background(Color(0xFFFFF0F5)).padding(16.dp)
+                ) {
+                    items(chatHistory) { msg ->
+                        ChatBubble(msg)
                     }
                 }
+
+                // Ô nhập liệu
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(value = "", onValueChange = {}, placeholder = { Text("Nhập tin nhắn...", fontSize = 14.sp) }, modifier = Modifier.weight(1f).padding(end = 8.dp), shape = CircleShape, colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = SakuraSecondary, focusedBorderColor = SakuraPrimary))
-                    IconButton(onClick = {}, modifier = Modifier.size(48.dp).background(SakuraPrimary, CircleShape)) { Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White) }
+                    OutlinedTextField(
+                        value = userText,
+                        onValueChange = { userText = it },
+                        modifier = Modifier.weight(1f),
+                        shape = CircleShape,
+                        placeholder = { Text("Hỏi Sakura...") }
+                    )
+                    IconButton(
+                        onClick = {
+                            if (userText.isNotBlank()) {
+                                viewModel.sendMessage(userText)
+                                userText = "" // Xóa text sau khi gửi
+                            }
+                        },
+                        modifier = Modifier.padding(start = 8.dp).background(SakuraPrimary, CircleShape)
+                    ) {
+                        Icon(Icons.Default.Send, null, tint = Color.White)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ChatBubble(msg: ChatMessage) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalAlignment = if (msg.isUser) Alignment.End else Alignment.Start
+    ) {
+        Surface(
+            color = if (msg.isUser) SakuraPrimary else Color.White,
+            shape = RoundedCornerShape(
+                topStart = 16.dp, topEnd = 16.dp,
+                bottomStart = if (msg.isUser) 16.dp else 0.dp,
+                bottomEnd = if (msg.isUser) 0.dp else 16.dp
+            ),
+            shadowElevation = 1.dp
+        ) {
+            Text(
+                text = msg.text,
+                modifier = Modifier.padding(12.dp),
+                color = if (msg.isUser) Color.White else SakuraTextDark,
+                fontSize = 14.sp
+            )
         }
     }
 }
