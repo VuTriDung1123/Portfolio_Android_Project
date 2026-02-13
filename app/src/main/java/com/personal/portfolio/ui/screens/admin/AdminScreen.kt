@@ -1,183 +1,239 @@
 package com.personal.portfolio.ui.screens.admin
 
-import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.google.gson.Gson
-import com.personal.portfolio.data.remote.*
-import com.personal.portfolio.ui.components.SakuraFallingEffect
-import com.personal.portfolio.ui.theme.SakuraPrimary
-import com.personal.portfolio.ui.theme.SakuraSecondary
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.personal.portfolio.data.remote.Post
+import com.personal.portfolio.ui.theme.*
+import com.personal.portfolio.ui.viewmodel.HomeViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminScreen(onGoBack: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
+fun AdminScreen(onGoBack: () -> Unit, viewModel: HomeViewModel = viewModel()) {
+    // --- BẢO MẬT ---
     var isAuth by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("") }
-    var activeTab by remember { mutableStateOf("content") }
-    var sectionKey by remember { mutableStateOf("hero") }
-    var isLoading by remember { mutableStateOf(false) }
+    var userLogin by remember { mutableStateOf("") }
+    var passLogin by remember { mutableStateOf("") }
 
-    // Data States
-    var heroEn by remember { mutableStateOf(HeroData()) }
-    var heroVi by remember { mutableStateOf(HeroData()) }
-    var heroJp by remember { mutableStateOf(HeroData()) }
-    var boxesEn by remember { mutableStateOf<List<SectionBox>>(emptyList()) }
-    var boxesVi by remember { mutableStateOf<List<SectionBox>>(emptyList()) }
-    var boxesJp by remember { mutableStateOf<List<SectionBox>>(emptyList()) }
+    // --- QUẢN LÝ GIAO DIỆN ---
+    var activeTab by remember { mutableStateOf("blog") }
+    val uiState by viewModel.uiState.collectAsState()
+    var isSaving by remember { mutableStateOf(false) }
 
-    fun handleLogin() {
-        if (password == "admin123") isAuth = true
-        else Toast.makeText(context, "Sai mật khẩu! 🌸", Toast.LENGTH_SHORT).show()
-    }
+    // --- FORM BLOG ---
+    var editingPostId by remember { mutableStateOf<String?>(null) }
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var tag by remember { mutableStateOf("uni_projects") }
+    var langPost by remember { mutableStateOf("vi") }
+    val imageLinks = remember { mutableStateListOf<String>() }
 
-    fun loadData() {
-        scope.launch {
-            isLoading = true
-            try {
-                // [FIX] Gọi hàm getSectionContent
-                val data = RetrofitClient.api.getSectionContent(sectionKey)
-                if (data != null) {
-                    val gson = Gson()
-                    if (sectionKey == "hero") {
-                        // [FIX] Handle nullable contentEn/Vi/Jp
-                        heroEn = if (!data.contentEn.isNullOrEmpty()) gson.fromJson(data.contentEn, HeroData::class.java) else HeroData()
-                        heroVi = if (!data.contentVi.isNullOrEmpty()) gson.fromJson(data.contentVi, HeroData::class.java) else HeroData()
-                        heroJp = if (!data.contentJp.isNullOrEmpty()) gson.fromJson(data.contentJp, HeroData::class.java) else HeroData()
-                    } else if (sectionKey == "profile") {
-                        // [FIX] Parse Array to List an toàn
-                        boxesEn = if (!data.contentEn.isNullOrEmpty()) gson.fromJson(data.contentEn, Array<SectionBox>::class.java).toMutableList() else emptyList()
-                        boxesVi = if (!data.contentVi.isNullOrEmpty()) gson.fromJson(data.contentVi, Array<SectionBox>::class.java).toMutableList() else emptyList()
-                        boxesJp = if (!data.contentJp.isNullOrEmpty()) gson.fromJson(data.contentJp, Array<SectionBox>::class.java).toMutableList() else emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            isLoading = false
-        }
-    }
+    // --- FORM SECTIONS ---
+    var selectedSectionKey by remember { mutableStateOf("about") }
+    var secEn by remember { mutableStateOf("") }
+    var secVi by remember { mutableStateOf("") }
+    var secJp by remember { mutableStateOf("") }
 
-    LaunchedEffect(sectionKey) { if(isAuth) loadData() }
-
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
-        SakuraFallingEffect()
-
-        if (!isAuth) {
-            IconButton(
-                onClick = onGoBack,
-                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
-            ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
-            }
-
+    // 1. MÀN HÌNH ĐĂNG NHẬP [BẢO MẬT]
+    if (!isAuth) {
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFF5F7)), contentAlignment = Alignment.Center) {
             Card(
-                modifier = Modifier.align(Alignment.Center).width(300.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+                modifier = Modifier.fillMaxWidth(0.85f).padding(16.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(8.dp)
             ) {
-                Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🌸 ADMIN ACCESS", color = SakuraPrimary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    Spacer(Modifier.height(16.dp))
+                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🌸 ADMIN LOGIN", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = SakuraPrimary)
+                    Spacer(Modifier.height(20.dp))
+                    OutlinedTextField(value = userLogin, onValueChange = { userLogin = it }, label = { Text("Username") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = passLogin,
+                        onValueChange = { passLogin = it },
                         label = { Text("Password") },
                         visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SakuraPrimary,
-                            unfocusedBorderColor = SakuraSecondary
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = { handleLogin() }, colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)) {
-                        Text("LOGIN")
-                    }
+                    Spacer(Modifier.height(24.dp))
+                    Button(
+                        onClick = {
+                            // Thay "admin" và "123" bằng tài khoản của bạn
+                            if(userLogin == "admin" && passLogin == "123") isAuth = true
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)
+                    ) { Text("LOGIN", fontWeight = FontWeight.Bold) }
+                    TextButton(onClick = onGoBack) { Text("Quay lại Home", color = Color.Gray) }
                 }
             }
-        } else {
-            Column(Modifier.fillMaxSize().padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(12.dp)).padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🌸 DASHBOARD", fontWeight = FontWeight.Bold, color = SakuraPrimary)
-                    IconButton(onClick = onGoBack) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Exit", tint = Color.Red)
+        }
+        return
+    }
+
+    // 2. MÀN HÌNH DASHBOARD CHÍNH (Sau khi Login)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("🌸 DASHBOARD", fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = onGoBack) { Icon(Icons.Default.ArrowBack, null) } },
+                actions = {
+                    TextButton(onClick = { activeTab = "blog" }) {
+                        Text("BLOG", color = if(activeTab == "blog") SakuraPrimary else Color.Gray)
                     }
-                }
+                    TextButton(onClick = { activeTab = "content" }) {
+                        Text("SECTIONS", color = if(activeTab == "content") SakuraPrimary else Color.Gray)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFFE4E1))
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding).fillMaxSize().background(Color(0xFFFFF5F7))) {
+            if (activeTab == "blog") {
+                // --- TAB QUẢN LÝ BLOG ---
+                LazyColumn(modifier = Modifier.padding(16.dp)) {
+                    item {
+                        AdminFormCard(title = if(editingPostId == null) "BÀI VIẾT MỚI" else "SỬA BÀI VIẾT") {
+                            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Tiêu đề") }, modifier = Modifier.fillMaxWidth())
 
-                Spacer(Modifier.height(10.dp))
+                            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                                val tags = listOf("uni_projects", "personal_projects", "achievements", "it_events", "lang_certs", "tech_certs", "other_certs", "my_confessions")
+                                DropdownField(label = tag, options = tags, onSelect = { tag = it }, Modifier.weight(1f))
+                                DropdownField(label = langPost.uppercase(), options = listOf("vi", "en", "jp"), onSelect = { langPost = it }, Modifier.weight(1f))
+                            }
 
-                Row {
-                    Button(onClick = { activeTab = "content" }, colors = ButtonDefaults.buttonColors(containerColor = if(activeTab=="content") SakuraPrimary else Color.Gray)) { Text("SECTIONS") }
-                    Spacer(Modifier.width(8.dp))
-                    Button(onClick = { activeTab = "blog" }, colors = ButtonDefaults.buttonColors(containerColor = if(activeTab=="blog") SakuraPrimary else Color.Gray)) { Text("BLOG") }
-                }
+                            OutlinedTextField(value = content, onValueChange = { content = it }, label = { Text("Nội dung") }, modifier = Modifier.fillMaxWidth().height(150.dp))
 
-                Spacer(Modifier.height(16.dp))
+                            // Quản lý link ảnh JSON
+                            Text("HÌNH ẢNH (Link từ Web Manager)", style = MaterialTheme.typography.labelSmall, color = SakuraPrimary, modifier = Modifier.padding(top = 8.dp))
+                            imageLinks.forEachIndexed { index, link ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    OutlinedTextField(value = link, onValueChange = { imageLinks[index] = it }, modifier = Modifier.weight(1f), placeholder = { Text("Dán link ảnh vào đây...") })
+                                    IconButton(onClick = { if(imageLinks.size > 1) imageLinks.removeAt(index) }) { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+                                }
+                            }
+                            TextButton(onClick = { imageLinks.add("") }) { Text("+ Thêm ô nhập ảnh") }
 
-                if (activeTab == "content") {
-                    Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 10.dp)) {
-                        listOf("hero", "profile", "about").forEach { key ->
-                            FilterChip(
-                                selected = sectionKey == key,
-                                onClick = { sectionKey = key },
-                                label = { Text(key.uppercase()) },
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
+                            Button(
+                                onClick = { /* Thực thi hàm Save Blog qua ViewModel */ },
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)
+                            ) { Text("LƯU BÀI VIẾT 🌸") }
                         }
                     }
 
-                    Column(Modifier.verticalScroll(rememberScrollState()).weight(1f)) {
-                        if (isLoading) {
-                            CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-                        } else {
-                            if (sectionKey == "hero") {
-                                HeroEditor("EN", heroEn) { heroEn = it }
-                                HeroEditor("VI", heroVi) { heroVi = it }
-                                HeroEditor("JP", heroJp) { heroJp = it }
-                            } else if (sectionKey == "profile") {
-                                BoxEditor("EN", boxesEn) { boxesEn = it }
-                                BoxEditor("VI", boxesVi) { boxesVi = it }
-                                BoxEditor("JP", boxesJp) { boxesJp = it }
-                            } else {
-                                Text("Tính năng đang cập nhật...", color = Color.Gray, modifier = Modifier.padding(20.dp))
-                            }
+                    item { Text("DANH SÁCH BÀI VIẾT", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 12.dp)) }
 
-                            Spacer(Modifier.height(20.dp))
-                            Button(onClick = { /* Save API */ }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)) {
-                                Text("SAVE CHANGES")
-                            }
-                            Spacer(Modifier.height(50.dp))
-                        }
+                    items(uiState.allPosts) { post ->
+                        AdminPostItem(post, onEdit = {
+                            editingPostId = post.id
+                            title = post.title
+                            content = post.content
+                            tag = post.tag
+                            langPost = post.language
+                            // Bóc tách JSON ảnh
+                            imageLinks.clear()
+                            val regex = "(https?://[^\"]+)".toRegex()
+                            regex.findAll(post.images).forEach { imageLinks.add(it.value) }
+                        }, onDelete = { /* Thực thi Delete */ })
                     }
-                } else {
-                    Text("Blog Manager đang phát triển...", modifier = Modifier.padding(20.dp))
+                }
+            } else {
+                // --- TAB QUẢN LÝ NỘI DUNG (SECTIONS) ---
+                Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+                    AdminFormCard(title = "CẤU HÌNH HỆ THỐNG") {
+                        val sections = listOf("global_config", "hero", "about", "profile", "career", "skills", "experience", "contact", "faq_data")
+                        SectionPicker(selected = selectedSectionKey, options = sections, onSelect = { selectedSectionKey = it })
+
+                        Text("BẢN TIẾNG ANH", fontWeight = FontWeight.Bold, color = SakuraPrimary)
+                        OutlinedTextField(value = secEn, onValueChange = { secEn = it }, modifier = Modifier.fillMaxWidth().height(150.dp))
+
+                        Text("BẢN TIẾNG VIỆT", fontWeight = FontWeight.Bold, color = SakuraPrimary)
+                        OutlinedTextField(value = secVi, onValueChange = { secVi = it }, modifier = Modifier.fillMaxWidth().height(150.dp))
+
+                        Text("BẢN TIẾNG NHẬT", fontWeight = FontWeight.Bold, color = SakuraPrimary)
+                        OutlinedTextField(value = secJp, onValueChange = { secJp = it }, modifier = Modifier.fillMaxWidth().height(150.dp))
+
+                        Button(
+                            onClick = { /* Thực thi Save Section qua ViewModel */ },
+                            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)
+                        ) { Text(if(isSaving) "ĐANG LƯU..." else "CẬP NHẬT TOÀN BỘ ✨") }
+                    }
                 }
             }
+        }
+    }
+}
+
+// --- COMPONENT CON ---
+@Composable
+fun AdminFormCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, color = SakuraPrimary, fontWeight = FontWeight.Bold)
+            HorizontalDivider(Modifier.padding(vertical = 8.dp), color = Color(0xFFFFE4E1))
+            content()
+        }
+    }
+}
+
+@Composable
+fun AdminPostItem(post: Post, onEdit: () -> Unit, onDelete: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        color = Color.White,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Color(0xFFFFE4E1))
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(post.title, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text("${post.tag} | ${post.language}", fontSize = 11.sp, color = Color.Gray)
+            }
+            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, null, tint = SakuraPrimary) }
+            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+        }
+    }
+}
+
+@Composable
+fun DropdownField(label: String, options: List<String>, onSelect: (String) -> Unit, modifier: Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) { Text(label, fontSize = 11.sp) }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { onSelect(opt); expanded = false }) }
+        }
+    }
+}
+
+@Composable
+fun SectionPicker(selected: String, options: List<String>, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        Button(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D4037))) {
+            Text("MỤC SỬA: ${selected.uppercase()}")
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { onSelect(opt); expanded = false }) }
         }
     }
 }
