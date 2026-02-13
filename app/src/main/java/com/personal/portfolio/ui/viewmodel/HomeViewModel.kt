@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val isLoading: Boolean = false, // Chỉ true khi mở app lần đầu
     val error: String? = null,
-
+    val currentLanguage: String = "vi",
     val hero: HeroData = HeroData(),
     val about: String = "",
     val profile: List<SectionBox> = emptyList(),
@@ -36,10 +36,16 @@ class HomeViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
     private val gson = Gson()
 
+    fun setLanguage(lang: String) {
+        if (_uiState.value.currentLanguage != lang) {
+            _uiState.value = _uiState.value.copy(currentLanguage = lang)
+            loadAllData(lang) // Tự động tải lại data mới
+        }
+    }
+
     fun loadAllData(lang: String = "vi") {
         viewModelScope.launch {
-            // [FIX LAG] CHỈ hiện Loading khi chưa có dữ liệu Hero (lần đầu mở app)
-            // Nếu đã có dữ liệu cũ, không set isLoading = true nữa -> Không bị nháy màn hình
+
             val isFirstLoad = _uiState.value.hero.fullName.isEmpty()
             if (isFirstLoad) {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
@@ -80,6 +86,7 @@ class HomeViewModel : ViewModel() {
                 _uiState.value = HomeUiState(
                     isLoading = false, // Tắt loading (nếu đang bật)
                     hero = heroData,
+                    currentLanguage = lang,
                     about = aboutJson ?: "",
                     career = careerJson ?: "",
                     skills = skillsJson ?: "",
