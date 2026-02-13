@@ -88,24 +88,48 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                 containerColor = Color.Transparent,
                 // --- TOP BAR ---
                 topBar = {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White.copy(alpha = 0.9f))
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .background(Color(0xFFFFE4E1).copy(alpha = 0.95f)) // Nền hồng nhạt đồng bộ Home
+                            .statusBarsPadding() // Đẩy xuống dưới thanh trạng thái hệ thống
                     ) {
-                        // Nút Back
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
-                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Cụm trái: Nút quay lại + Tiêu đề nhỏ
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { navController.popBackStack() }) {
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
+                                }
+                                Column {
+                                    Text(
+                                        text = staticText.blog_title,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SakuraPrimary
+                                    )
+                                    Text(
+                                        text = "vutridung.portfolio",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = SakuraTextLight,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
 
-                        // Dropdown Ngôn ngữ (Dùng chung ViewModel để đồng bộ)
-                        BlogLanguageDropdown(
-                            currentLang = currentLang,
-                            onLangSelect = { newLang -> viewModel.setLanguage(newLang) }
-                        )
+                            // Cụm phải: Dropdown Ngôn ngữ
+                            BlogLanguageDropdown(
+                                currentLang = currentLang,
+                                onLangSelect = { newLang -> viewModel.setLanguage(newLang) }
+                            )
+                        }
+                        // Đường kẻ mảnh trang trí phía dưới
+                        Divider(color = SakuraSecondary.copy(alpha = 0.3f), thickness = 1.dp)
                     }
                 }
             ) { padding ->
