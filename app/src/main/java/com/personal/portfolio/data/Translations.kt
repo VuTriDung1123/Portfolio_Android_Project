@@ -52,7 +52,15 @@ data class PortfolioContent(
     val msg_no_gallery: String,
     val msg_no_blog: String,
     val msg_no_faq: String,
-    val msg_no_contact: String
+    val msg_no_contact: String,
+
+    // [MỚI] CHO TRANG BLOG
+    val blog_title: String,
+    val blog_subtitle: String,
+    val blog_search_hint: String,
+    val blog_sort_newest: String,
+    val blog_sort_oldest: String,
+    val blog_tab_all: String
 )
 
 object SakuraData {
@@ -106,7 +114,15 @@ object SakuraData {
         msg_no_gallery = "Thư viện ảnh đang trống.",
         msg_no_blog = "Chưa có bài viết mới.",
         msg_no_faq = "Chưa có câu hỏi thường gặp.",
-        msg_no_contact = "Chưa có thông tin liên hệ."
+        msg_no_contact = "Chưa có thông tin liên hệ.",
+
+        // Blog
+        blog_title = "THƯ VIỆN BÀI VIẾT",
+        blog_subtitle = "Code là thơ, viết bằng logic.",
+        blog_search_hint = "Tìm kiếm bài viết...",
+        blog_sort_newest = "Mới nhất",
+        blog_sort_oldest = "Lâu nhất",
+        blog_tab_all = "Tất cả"
     )
 
     // --- 2. TIẾNG ANH (EN) ---
@@ -142,7 +158,14 @@ object SakuraData {
         msg_no_gallery = "Gallery is empty.",
         msg_no_blog = "No posts available.",
         msg_no_faq = "No FAQs available.",
-        msg_no_contact = "No contact info yet."
+        msg_no_contact = "No contact info yet.",
+
+        blog_title = "BLOG LIBRARY",
+        blog_subtitle = "Code is poetry written in logic.",
+        blog_search_hint = "Search stories...",
+        blog_sort_newest = "Newest",
+        blog_sort_oldest = "Oldest",
+        blog_tab_all = "All Stories"
     )
 
     // --- 3. TIẾNG NHẬT (JP) ---
@@ -178,6 +201,13 @@ object SakuraData {
         msg_no_gallery = "ギャラリーは空です。",
         msg_no_blog = "投稿はありません。",
         msg_no_faq = "よくある質問はありません。",
-        msg_no_contact = "連絡先情報なし。"
+        msg_no_contact = "連絡先情報なし。",
+
+        blog_title = "ブログライブラリ", // Blog Library
+        blog_subtitle = "コードは論理で書かれた詩である。",
+        blog_search_hint = "記事を検索...",
+        blog_sort_newest = "最新順",
+        blog_sort_oldest = "古い順",
+        blog_tab_all = "すべての記事"
     )
 }
