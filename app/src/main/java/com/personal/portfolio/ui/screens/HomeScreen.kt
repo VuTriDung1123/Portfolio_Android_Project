@@ -2,6 +2,7 @@ package com.personal.portfolio.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,17 +52,28 @@ import com.personal.portfolio.ui.viewmodel.ChatMessage
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
-    // --- STATE QUẢN LÝ ---
+    // --- 1. KHAI BÁO UI STATE TRƯỚC ĐỂ THAM CHIẾU (Fix lỗi Unresolved reference) ---
+    val uiState by viewModel.uiState.collectAsState()
+
+    // --- 2. QUẢN LÝ TRẠNG THÁI ---
     var currentLang by remember { mutableStateOf("vi") }
     var nextLang by remember { mutableStateOf("vi") }
-
     var showAdmin by remember { mutableStateOf(false) }
     var showChatDialog by remember { mutableStateOf(false) }
-    var showIntro by remember { mutableStateOf(true) }
     var isSwitchingLang by remember { mutableStateOf(false) }
 
-    // --- DATA TỪ API ---
-    val uiState by viewModel.uiState.collectAsState()
+    // --- 3. QUẢN LÝ INTRO (Fix lỗi Cannot infer type & load lại) ---
+    // Khởi tạo dựa trên việc đã có data Hero hay chưa
+    var showIntro by remember {
+        mutableStateOf<Boolean>(uiState.hero.fullName.isEmpty())
+    }
+
+    // Tự động tắt Intro khi data về
+    LaunchedEffect(uiState.hero.fullName) {
+        if (uiState.hero.fullName.isNotEmpty()) {
+            showIntro = false
+        }
+    }
 
     // LẤY TEXT TIÊU ĐỀ
     val staticText = when(currentLang) {
@@ -79,7 +91,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
         viewModel.loadAllData(lang)
     }
 
-    LaunchedEffect(Unit) {
+    // Tự động load data (ViewModel đã có logic chặn load lặp)
+    LaunchedEffect(currentLang) {
         viewModel.loadAllData(currentLang)
     }
 
@@ -104,18 +117,15 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
                 Scaffold(
                     containerColor = Color.Transparent,
-                    // --- TOP BAR ---
                     topBar = {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // [CHỈNH SỬA] Màu hồng nhạt (SakuraBg)
                                 .background(Color(0xFFFFE4E1).copy(alpha = 0.95f))
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Cụm Trái
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
@@ -146,7 +156,6 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     )
                                 }
                             }
-                            // Cụm Phải
                             LanguageDropdown(currentLang = currentLang, onLangSelect = { switchLanguage(it) })
                         }
                     },
@@ -160,21 +169,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
-                        // 1. HERO SECTION (DẠNG DỌC - VERTICAL POP-OUT)
                         item {
                             if (uiState.hero.fullName.isNotEmpty()) {
-                                // HỘP CHỨA TỔNG (Căn giữa, giảm khoảng cách với TopBar)
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 10.dp, bottom = 20.dp) // [SỬA] Giảm top xuống 10dp cho gần TopBar
+                                        .padding(top = 10.dp, bottom = 20.dp)
                                 ) {
-                                    // A. LỚP NỀN (BACKGROUND CARD)
-                                    // Nằm thấp xuống 60dp để nhường chỗ cho Avatar ở trên
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(top = 60.dp) // Đẩy nền xuống để Avatar lòi ra ở trên
+                                            .padding(top = 60.dp)
                                             .clip(RoundedCornerShape(20.dp))
                                             .background(
                                                 brush = Brush.linearGradient(
@@ -182,25 +187,19 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 )
                                             )
                                     ) {
-                                        // Background trang trí
                                         Icon(
                                             painter = painterResource(R.drawable.sakura_avatar),
                                             contentDescription = null,
                                             tint = Color.White.copy(alpha = 0.4f),
-                                            modifier = Modifier
-                                                .size(400.dp)
-                                                .align(Alignment.BottomCenter)
-                                                .offset(y = 50.dp)
+                                            modifier = Modifier.size(400.dp).align(Alignment.BottomCenter).offset(y = 50.dp)
                                         )
 
-                                        // B. NỘI DUNG TEXT (Nằm trong card, đẩy xuống dưới Avatar)
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(top = 80.dp, bottom = 20.dp, start = 16.dp, end = 16.dp), // Padding top 80dp để không đè Avatar
-                                            horizontalAlignment = Alignment.CenterHorizontally // [QUAN TRỌNG] Căn giữa toàn bộ
+                                                .padding(top = 80.dp, bottom = 20.dp, start = 16.dp, end = 16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            // Greeting
                                             Surface(
                                                 color = Color.White,
                                                 shape = RoundedCornerShape(20.dp),
@@ -216,15 +215,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             }
                                             Spacer(Modifier.height(12.dp))
 
-                                            // Tên chính
                                             Text(
                                                 text = uiState.hero.fullName,
-                                                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Black), // Chữ to hơn chút
+                                                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Black),
                                                 color = SakuraTextDark,
                                                 textAlign = TextAlign.Center
                                             )
 
-                                            // Badges (Tên phụ)
                                             Row(
                                                 modifier = Modifier
                                                     .padding(vertical = 12.dp)
@@ -234,18 +231,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 val enName = if(uiState.hero.nickName1.isNotEmpty()) uiState.hero.nickName1 else staticText.hero["sub_name_1"]
                                                 val jpName = if(uiState.hero.nickName2.isNotEmpty()) uiState.hero.nickName2 else staticText.hero["sub_name_2"]
 
-                                                if (!enName.isNullOrEmpty()) {
-                                                    NicknameBadge(label = "EN", name = enName)
-                                                }
-                                                if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) {
-                                                    Spacer(Modifier.width(8.dp))
-                                                }
-                                                if (!jpName.isNullOrEmpty()) {
-                                                    NicknameBadge(label = "JP", name = jpName)
-                                                }
+                                                if (!enName.isNullOrEmpty()) NicknameBadge(label = "EN", name = enName)
+                                                if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) Spacer(Modifier.width(8.dp))
+                                                if (!jpName.isNullOrEmpty()) NicknameBadge(label = "JP", name = jpName)
                                             }
 
-                                            // Typewriter (Chữ chạy)
                                             val typePrefix = when(currentLang) {
                                                 "vi" -> "Tôi là "
                                                 "jp" -> "私は"
@@ -255,61 +245,47 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 prefix = typePrefix,
                                                 texts = when(currentLang) {
                                                     "vi" -> listOf("Lập trình viên", "Sinh viên CNTT", "Yêu công nghệ")
-                                                    "jp" -> listOf("開発者", "学生", "技術愛好家")
+                                                    "jp" -> listOf("開発者", "学生", "技術愛好 gia")
                                                     else -> listOf("Developer", "IT Student", "Tech Enthusiast")
                                                 },
                                                 modifier = Modifier.padding(bottom = 20.dp)
                                             )
 
-                                            // Buttons (Nằm ngang ở dưới cùng)
                                             Row(
                                                 horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically, // Căn giữa theo chiều dọc
+                                                verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                                             ) {
-                                                // 1. NÚT PROJECT
                                                 Button(
                                                     onClick = { navController.navigate("blog") },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary),
-                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)
                                                 ) { Text("Project", fontSize = 13.sp) }
 
-                                                Spacer(Modifier.width(8.dp)) // Khoảng cách
+                                                Spacer(Modifier.width(8.dp))
 
-                                                // 2. [MỚI] NÚT TẢI CV
                                                 OutlinedButton(
-                                                    onClick = {
-                                                        // TODO: Thêm link tải CV vào đây
-                                                        // uriHandler.openUri("https://link-to-your-cv.com")
-                                                    },
+                                                    onClick = { /* CV link */ },
                                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraPrimary),
-                                                    border = androidx.compose.foundation.BorderStroke(1.dp, SakuraPrimary),
-                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                    border = BorderStroke(1.dp, SakuraPrimary)
                                                 ) {
-                                                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                    Icon(Icons.Default.Download, null, modifier = Modifier.size(16.dp))
                                                     Spacer(Modifier.width(4.dp))
                                                     Text("CV", fontSize = 13.sp)
                                                 }
 
-                                                Spacer(Modifier.width(8.dp)) // Khoảng cách
+                                                Spacer(Modifier.width(8.dp))
 
-                                                // 3. NÚT FAQ
                                                 OutlinedButton(
                                                     onClick = { navController.navigate("faq") },
                                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraTextDark),
-                                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White),
-                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                                                    border = BorderStroke(1.dp, Color.White)
                                                 ) { Text("FAQ", fontSize = 13.sp) }
                                             }
                                         }
                                     }
 
-                                    // C. AVATAR (NẰM TRÊN CÙNG - CĂN GIỮA)
-                                    // Không cần offset âm nữa, vì ta đã đẩy background xuống
                                     Box(
-                                        modifier = Modifier
-                                            .size(130.dp)
-                                            .align(Alignment.TopCenter), // [QUAN TRỌNG] Căn giữa đỉnh
+                                        modifier = Modifier.size(130.dp).align(Alignment.TopCenter),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         val painter = if (uiState.hero.avatarUrl.isNotEmpty())
@@ -321,10 +297,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             painter = painter,
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(130.dp)
-                                                .clip(CircleShape)
-                                                .border(4.dp, Color.White, CircleShape)
+                                            modifier = Modifier.size(130.dp).clip(CircleShape).border(4.dp, Color.White, CircleShape)
                                         )
                                         Image(
                                             painter = painterResource(R.drawable.sakura_avatar),
@@ -338,101 +311,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             }
                         }
 
-                        // ... CÁC SECTION KHÁC GIỮ NGUYÊN ...
-                        // 2. ABOUT SECTION
+                        // --- CÁC SECTION KHÁC ---
                         item { SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) } }
-
-                        // 3. PROFILE SECTION
                         item { SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) } }
-
-                        // 4. CERTIFICATES SECTION (CHIA 3 LOẠI VUỐT NGANG)
-                        item {
-                            SectionCard(staticText.sec_03_cert) {
-                                Column {
-                                    // Loại 1: IT Certificates
-                                    val itCerts = uiState.allPosts.filter { it.tag.lowercase() == "tech_certs" }
-                                    HorizontalPostLane(title = "❖ IT Certificates", posts = itCerts, navController = navController)
-
-                                    Spacer(Modifier.height(16.dp))
-
-                                    // Loại 2: Language Certificates
-                                    val langCerts = uiState.allPosts.filter { it.tag.lowercase() == "lang_certs" }
-                                    HorizontalPostLane(title = "❖ Language Certificates", posts = langCerts, navController = navController)
-
-                                    Spacer(Modifier.height(16.dp))
-
-                                    // Loại 3: Other Certificates
-                                    val otherCerts = uiState.allPosts.filter { it.tag.lowercase() == "other_certs" }
-                                    HorizontalPostLane(title = "❖ Other Certificates", posts = otherCerts, navController = navController)
-                                }
-                            }
-                        }
-
-                        // 5. CAREER SECTION
+                        item { SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } } }
                         item { SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) } }
-
-                        // 6. ACHIEVEMENTS SECTION (VUỐT NGANG)
-                        item {
-                            SectionCard(staticText.sec_05_achievements) {
-                                val achievements = uiState.allPosts.filter { it.tag.lowercase() == "achievements" }
-                                HorizontalPostLane(posts = achievements, navController = navController)
-                            }
-                        }
-
-                        // 7. SKILLS SECTION
+                        item { SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) } }
                         item { SectionCard(staticText.sec_06_skills) { if(uiState.skills.isNotEmpty()) Text(uiState.skills, color = SakuraTextDark) else EmptyData(staticText.msg_no_skills) } }
-
-                        // 8. EXPERIENCE SECTION
-                        item { SectionCard(staticText.sec_07_exp) { /* Giữ nguyên UI Timeline cũ vì đặc thù của Exp */ } }
-
-                        // 9. PROJECTS SECTION (CHIA 2 LOẠI VUỐT NGANG)
-                        item {
-                            SectionCard(staticText.sec_08_proj) {
-                                Column {
-                                    val uniProjs = uiState.allPosts.filter { it.tag.lowercase() == "uni_projects" }
-                                    HorizontalPostLane(title = "❖ University Projects", posts = uniProjs, navController = navController)
-
-                                    Spacer(Modifier.height(16.dp))
-
-                                    val perProjs = uiState.allPosts.filter { it.tag.lowercase() == "personal_projects" }
-                                    HorizontalPostLane(title = "❖ Personal Projects", posts = perProjs, navController = navController)
-                                }
-                            }
-                        }
-
-                        // 10. GALLERY / IT EVENTS (VUỐT NGANG)
-                        item {
-                            SectionCard(staticText.sec_09_gallery) {
-                                val itEvents = uiState.allPosts.filter { it.tag.lowercase() == "it_events" }
-                                HorizontalPostLane(posts = itEvents, navController = navController)
-                            }
-                        }
-
-
-                        item {
-                            SectionCard(staticText.sec_10_blog) {
-                                val blogs = uiState.allPosts.filter { !it.tag.lowercase().contains("project") }.take(3)
-                                if (blogs.isNotEmpty()) {
-                                    Column {
-                                        // Dãy vuốt ngang
-                                        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                                            blogs.forEach { post ->
-                                                HomePostCard(post, navController)
-                                            }
-                                        }
-                                        // Nút xem tất cả
-                                        TextButton(
-                                            onClick = { navController.navigate("blog") },
-                                            modifier = Modifier.align(Alignment.End)
-                                        ) {
-                                            Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                } else {
-                                    EmptyData(staticText.msg_no_blog)
-                                }
-                            }
-                        }
+                        item { SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) } }
+                        item { SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } } }
+                        item { SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) } }
+                        item { SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag.lowercase().contains("project") }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) } }
                         item { SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) } }
                         item { SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) } }
                     }

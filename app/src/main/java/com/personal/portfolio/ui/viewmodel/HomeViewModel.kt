@@ -34,7 +34,7 @@ data class HomeUiState(
     val selectedTag: String = "ALL"
 )
 
-// --- 2. MODEL CHAT (Chỉ khai báo 1 lần duy nhất ở đây) ---
+// --- 2. MODEL CHAT (Chỉ khai báo 1 lần duy nhất) ---
 data class ChatMessage(
     val text: String,
     val isUser: Boolean
@@ -45,9 +45,8 @@ class HomeViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
     private val gson = Gson()
 
-    // Khởi tạo Gemini AI dùng Key bảo mật từ BuildConfig
+    // Khởi tạo Gemini AI dùng Key từ BuildConfig
     private val generativeModel = GenerativeModel(
-        // Sử dụng đúng tên 'name' từ danh sách JSON bạn gửi
         modelName = "models/gemini-3-flash-preview",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
@@ -55,7 +54,6 @@ class HomeViewModel : ViewModel() {
     private val _chatHistory = MutableStateFlow(listOf<ChatMessage>())
     val chatHistory = _chatHistory.asStateFlow()
 
-    // --- XỬ LÝ NGÔN NGỮ ---
     fun setLanguage(lang: String) {
         if (_uiState.value.currentLanguage != lang) {
             _uiState.value = _uiState.value.copy(currentLanguage = lang)
@@ -63,32 +61,31 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    // --- TẢI DỮ LIỆU ĐỘNG TỪ DATABASE (Đồng bộ với bản Web) ---
-    fun loadAllData(lang: String = "vi") {
+    // --- CƠ CHẾ CACHE-FIRST ĐỂ KHÔNG LOAD LẠI ---
+    fun loadAllData(lang: String = "vi", forceRefresh: Boolean = false) {
         viewModelScope.launch {
+            // Kiểm tra: Nếu đã có data và cùng ngôn ngữ thì thoát luôn
+            if (!forceRefresh && _uiState.value.hero.fullName.isNotEmpty() && _uiState.value.currentLanguage == lang) {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                return@launch
+            }
+
+            // Chỉ hiện loading khi dữ liệu thực sự trống hoặc ép buộc làm mới
             val isFirstLoad = _uiState.value.hero.fullName.isEmpty()
-            if (isFirstLoad) {
+            if (isFirstLoad || forceRefresh) {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             }
 
             try {
-                // Chạy lấy danh sách bài viết ngầm để tối ưu tốc độ
-                val postsDeferred = async {
-                    try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() }
-                }
+                val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() } }
 
                 suspend fun fetchRawJson(key: String): String? {
                     val res = try { RetrofitClient.api.getSectionContent(key) } catch (e: Exception) { null }
                     return if (res != null) {
-                        when(lang) {
-                            "en" -> res.contentEn
-                            "jp" -> res.contentJp
-                            else -> res.contentVi
-                        }
+                        when(lang) { "en" -> res.contentEn; "jp" -> res.contentJp; else -> res.contentVi }
                     } else null
                 }
 
-                // Lấy các mục nội dung hệ thống
                 val heroJson = fetchRawJson("hero")
                 val aboutJson = fetchRawJson("about")
                 val careerJson = fetchRawJson("career")
@@ -101,7 +98,6 @@ class HomeViewModel : ViewModel() {
                 val achiJson = fetchRawJson("achievements")
                 val galleryJson = fetchRawJson("gallery")
 
-                // Chuyển đổi JSON sang Object tương ứng
                 val heroData = if(!heroJson.isNullOrEmpty()) gson.fromJson(heroJson, HeroData::class.java) else HeroData()
                 val profileList = if(!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(profileJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
@@ -136,7 +132,6 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    // --- KẾT NỐI GEMINI AI (Sử dụng Persona Sakura từ bản Web) ---
     fun sendMessage(userPrompt: String) {
         viewModelScope.launch {
             val currentList = _chatHistory.value.toMutableList()
@@ -150,14 +145,11 @@ class HomeViewModel : ViewModel() {
                         text(userPrompt)
                     }
                 )
-
                 val botResponse = response.text ?: "Sakura chưa nghĩ ra câu trả lời... 🌸"
                 val updatedList = _chatHistory.value.toMutableList()
                 updatedList.add(ChatMessage(botResponse, isUser = false))
                 _chatHistory.value = updatedList
-
             } catch (e: Exception) {
-                // [SỬA TẠI ĐÂY] Hiện lỗi chi tiết để debug
                 val errorList = _chatHistory.value.toMutableList()
                 errorList.add(ChatMessage("Lỗi: ${e.localizedMessage} 🌸", isUser = false))
                 _chatHistory.value = errorList
@@ -170,6 +162,4 @@ class HomeViewModel : ViewModel() {
         val filtered = if (tag == "ALL") currentPosts else currentPosts.filter { it.tag == tag }
         _uiState.value = _uiState.value.copy(filteredPosts = filtered, selectedTag = tag)
     }
-
-    fun getPostById(postId: String): Post? = _uiState.value.allPosts.find { it.id == postId }
 }
