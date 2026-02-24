@@ -134,24 +134,47 @@ class HomeViewModel : ViewModel() {
 
     fun sendMessage(userPrompt: String) {
         viewModelScope.launch {
+            val state = _uiState.value
+
+            // 1. Chuẩn bị "Bộ nhớ" dữ liệu dựa trên Profile hiện tại
+            val myProfileContext = """
+            Bạn là Sakura AI, trợ lý ảo thông minh của Vũ Trí Dũng (David Miller/Akina Aoi).
+            Thông tin về Dũng để bạn trả lời khách hàng:
+            - Giới thiệu: ${state.about}
+            - Kỹ năng: ${state.skills}
+            - Mục tiêu sự nghiệp: ${state.career}
+            - Các dự án tiêu biểu: ${state.allPosts.filter { it.tag.contains("project") }.joinToString { it.title }}
+            - Thành tựu: ${state.achievements}
+            - Chứng chỉ: ${state.certificates}
+            
+            Phong cách trả lời: 
+            - Thân thiện, lễ phép, sử dụng icon hoa anh đào 🌸. 
+            - Nếu khách hỏi về dự án hoặc kỹ năng, hãy dựa vào thông tin trên để trả lời chính xác.
+            - Nếu thông tin không có trong profile, hãy trả lời khéo léo rằng bạn sẽ hỏi lại Dũng sau.
+        """.trimIndent()
+
+            // 2. Cập nhật tin nhắn người dùng lên UI
             val currentList = _chatHistory.value.toMutableList()
             currentList.add(ChatMessage(userPrompt, isUser = true))
             _chatHistory.value = currentList
 
             try {
+                // 3. Gửi yêu cầu với Context đầy đủ
                 val response = generativeModel.generateContent(
                     content {
-                        text("Bạn là Sakura AI, trợ lý ảo của Vũ Trí Dũng. Hãy trả lời thân thiện, sử dụng icon hoa anh đào 🌸.")
-                        text(userPrompt)
+                        text(myProfileContext) // Đưa toàn bộ Profile làm ngữ cảnh
+                        text(userPrompt)       // Câu hỏi của khách
                     }
                 )
-                val botResponse = response.text ?: "Sakura chưa nghĩ ra câu trả lời... 🌸"
+
+                val botResponse = response.text ?: "Sakura chưa tìm thấy câu trả lời phù hợp... 🌸"
                 val updatedList = _chatHistory.value.toMutableList()
                 updatedList.add(ChatMessage(botResponse, isUser = false))
                 _chatHistory.value = updatedList
+
             } catch (e: Exception) {
                 val errorList = _chatHistory.value.toMutableList()
-                errorList.add(ChatMessage("Lỗi: ${e.localizedMessage} 🌸", isUser = false))
+                errorList.add(ChatMessage("Lỗi kết nối: ${e.localizedMessage} 🌸", isUser = false))
                 _chatHistory.value = errorList
             }
         }
