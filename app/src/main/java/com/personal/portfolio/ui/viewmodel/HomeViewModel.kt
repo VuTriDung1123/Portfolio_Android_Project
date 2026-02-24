@@ -1,5 +1,7 @@
 package com.personal.portfolio.ui.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -12,6 +14,7 @@ import kotlinx.coroutines.launch
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.personal.portfolio.BuildConfig
+import kotlinx.coroutines.flow.update
 
 // --- 1. STATE QUẢN LÝ GIAO DIỆN ---
 data class HomeUiState(
@@ -37,7 +40,8 @@ data class HomeUiState(
 // --- 2. MODEL CHAT (Chỉ khai báo 1 lần duy nhất) ---
 data class ChatMessage(
     val text: String,
-    val isUser: Boolean
+    val isUser: Boolean,
+    val isTyping: Boolean = false
 )
 
 class HomeViewModel : ViewModel() {
@@ -132,50 +136,50 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    // Trong HomeViewModel.kt
     fun sendMessage(userPrompt: String) {
         viewModelScope.launch {
             val state = _uiState.value
 
-            // 1. Chuẩn bị "Bộ nhớ" dữ liệu dựa trên Profile hiện tại
-            val myProfileContext = """
-            Bạn là Sakura AI, trợ lý ảo thông minh của Vũ Trí Dũng (David Miller/Akina Aoi).
-            Thông tin về Dũng để bạn trả lời khách hàng:
+            // 1. Chuẩn bị Context dữ liệu (Gồm Link để AI không hỏi ngược)
+            val projectLinks = state.allPosts.filter { it.tag.contains("project", true) }
+                .joinToString("\n") { "- ${it.title}: post_detail/${it.id}" }
+
+            val systemPrompt = """
+            Bạn là Sakura AI 🌸. Hãy trả lời TRỰC TIẾP dựa trên thông tin này:
             - Giới thiệu: ${state.about}
             - Kỹ năng: ${state.skills}
-            - Mục tiêu sự nghiệp: ${state.career}
-            - Các dự án tiêu biểu: ${state.allPosts.filter { it.tag.contains("project") }.joinToString { it.title }}
-            - Thành tựu: ${state.achievements}
-            - Chứng chỉ: ${state.certificates}
-            
-            Phong cách trả lời: 
-            - Thân thiện, lễ phép, sử dụng icon hoa anh đào 🌸. 
-            - Nếu khách hỏi về dự án hoặc kỹ năng, hãy dựa vào thông tin trên để trả lời chính xác.
-            - Nếu thông tin không có trong profile, hãy trả lời khéo léo rằng bạn sẽ hỏi lại Dũng sau.
+            - Dự án & Link: $projectLinks
+            LƯU Ý: Nếu nhắc đến dự án, hãy kèm link theo mẫu 'post_detail/id'. Trả lời thân thiện, dùng icon 🌸.
         """.trimIndent()
 
-            // 2. Cập nhật tin nhắn người dùng lên UI
-            val currentList = _chatHistory.value.toMutableList()
-            currentList.add(ChatMessage(userPrompt, isUser = true))
-            _chatHistory.value = currentList
+            // 2. Thêm tin nhắn User an toàn
+            _chatHistory.update { it + ChatMessage(userPrompt, isUser = true) }
+
+            // 3. Thêm trạng thái Typing (Dấu 3 chấm)
+            _chatHistory.update { it + ChatMessage("", isUser = false, isTyping = true) }
 
             try {
-                // 3. Gửi yêu cầu với Context đầy đủ
                 val response = generativeModel.generateContent(
                     content {
-                        text(myProfileContext) // Đưa toàn bộ Profile làm ngữ cảnh
-                        text(userPrompt)       // Câu hỏi của khách
+                        text(systemPrompt)
+                        text(userPrompt)
                     }
                 )
 
-                val botResponse = response.text ?: "Sakura chưa tìm thấy câu trả lời phù hợp... 🌸"
-                val updatedList = _chatHistory.value.toMutableList()
-                updatedList.add(ChatMessage(botResponse, isUser = false))
-                _chatHistory.value = updatedList
+                val botResponse = response.text ?: "Sakura đang bận xíu... 🌸"
+
+                // 4. Cập nhật câu trả lời: Xóa Typing, thêm Text thật
+                _chatHistory.update { history ->
+                    history.filter { !it.isTyping } + ChatMessage(botResponse, isUser = false)
+                }
 
             } catch (e: Exception) {
-                val errorList = _chatHistory.value.toMutableList()
-                errorList.add(ChatMessage("Lỗi kết nối: ${e.localizedMessage} 🌸", isUser = false))
-                _chatHistory.value = errorList
+                // Xử lý khi lỗi để không văng App
+                _chatHistory.update { history ->
+                    history.filter { !it.isTyping } + ChatMessage("Lỗi kết nối rồi bạn ơi! 🌸", isUser = false)
+                }
             }
         }
     }

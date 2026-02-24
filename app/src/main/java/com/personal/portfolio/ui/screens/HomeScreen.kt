@@ -1,5 +1,7 @@
 package com.personal.portfolio.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -50,6 +52,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import com.personal.portfolio.ui.viewmodel.ChatMessage
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
     // --- 1. KHAI BÁO UI STATE TRƯỚC ĐỂ THAM CHIẾU (Fix lỗi Unresolved reference) ---
@@ -429,6 +432,7 @@ fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     val chatHistory by viewModel.chatHistory.collectAsState()
@@ -489,6 +493,7 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     }
 }
 
+// Trong HomeScreen.kt
 @Composable
 fun ChatBubble(msg: ChatMessage) {
     Column(
@@ -497,21 +502,32 @@ fun ChatBubble(msg: ChatMessage) {
     ) {
         Surface(
             color = if (msg.isUser) SakuraPrimary else Color.White,
-            shape = RoundedCornerShape(
-                topStart = 16.dp, topEnd = 16.dp,
-                bottomStart = if (msg.isUser) 16.dp else 0.dp,
-                bottomEnd = if (msg.isUser) 0.dp else 16.dp
-            ),
+            shape = RoundedCornerShape(12.dp),
             shadowElevation = 1.dp
         ) {
-            Text(
-                text = msg.text,
-                modifier = Modifier.padding(12.dp),
-                color = if (msg.isUser) Color.White else SakuraTextDark,
-                fontSize = 14.sp
-            )
+            if (msg.isTyping) {
+                // Hiệu ứng 3 chấm nhấp nháy như Messenger
+                TypingAnimation()
+            } else {
+                Text(
+                    text = msg.text,
+                    modifier = Modifier.padding(12.dp),
+                    color = if (msg.isUser) Color.White else SakuraTextDark
+                )
+            }
         }
     }
+}
+
+@Composable
+fun TypingAnimation() {
+    val infiniteTransition = rememberInfiniteTransition(label = "typing")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(600), repeatMode = RepeatMode.Reverse),
+        label = "alpha"
+    )
+    Text("• • •", modifier = Modifier.padding(12.dp).alpha(alpha), color = SakuraPrimary, fontWeight = FontWeight.Bold)
 }
 
 @Composable
@@ -625,3 +641,4 @@ fun HorizontalPostLane(
         }
     }
 }
+
