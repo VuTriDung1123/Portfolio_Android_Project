@@ -15,6 +15,9 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.personal.portfolio.BuildConfig
 import kotlinx.coroutines.flow.update
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 
 // --- 1. STATE QUẢN LÝ GIAO DIỆN ---
 data class HomeUiState(
@@ -190,5 +193,45 @@ class HomeViewModel : ViewModel() {
         val currentPosts = _uiState.value.allPosts
         val filtered = if (tag == "ALL") currentPosts else currentPosts.filter { it.tag == tag }
         _uiState.value = _uiState.value.copy(filteredPosts = filtered, selectedTag = tag)
+    }
+
+
+    // Biến lưu trạng thái thông báo ở trang Admin
+    var adminMessage by mutableStateOf("")
+
+    // Hàm 1: Lấy dữ liệu GỐC (gồm cả Anh, Việt, Nhật) từ Database để đưa vào form Edit
+    suspend fun getRawSectionForAdmin(key: String): SectionData? {
+        return try {
+            RetrofitClient.api.getSectionContent(key)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // Hàm 2: Bắn dữ liệu lên Next.js API để lưu vào PostgreSQL
+    fun saveSectionContent(key: String, contentEn: String, contentVi: String, contentJp: String) {
+        viewModelScope.launch {
+            adminMessage = "Đang lưu lên Database... ⏳"
+            try {
+                // Đóng gói dữ liệu giống hệt JSON body bên Next.js yêu cầu
+                val requestData = mapOf(
+                    "sectionKey" to key,
+                    "contentEn" to contentEn,
+                    "contentVi" to contentVi,
+                    "contentJp" to contentJp
+                )
+
+                // Gọi API POST
+                val response = RetrofitClient.api.saveSectionContent(requestData)
+
+                adminMessage = "Đã lưu thành công lên Web & App! 🌸"
+
+                // Ép Home tải lại dữ liệu mới nhất để khi thoát Admin ra ngoài sẽ thấy ngay
+                loadAllData(lang = _uiState.value.currentLanguage, forceRefresh = true)
+
+            } catch (e: Exception) {
+                adminMessage = "Lỗi lưu: ${e.localizedMessage} 🍃"
+            }
+        }
     }
 }
