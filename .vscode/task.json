@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build và Chạy App",
+            "type": "shell",
+            "command": ".\\gradlew installDebug ; adb shell am start -n \"com.personal.portfolio/.MainActivity\"",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        }
+    ]
+}

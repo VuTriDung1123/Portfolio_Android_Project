@@ -25,7 +25,7 @@ data class HomeUiState(
     val about: String = "",
     val profile: List<SectionBox> = emptyList(),
     val career: String = "",
-    val skills: String = "",
+    val skills: List<SectionBox> = emptyList(),
     val experience: List<ExpGroup> = emptyList(),
     val contact: List<SectionBox> = emptyList(),
     val faq: List<FaqItem> = emptyList(),
@@ -58,10 +58,11 @@ class HomeViewModel : ViewModel() {
     private val _chatHistory = MutableStateFlow(listOf<ChatMessage>())
     val chatHistory = _chatHistory.asStateFlow()
 
+    // TRONG FILE: HomeViewModel.kt
     fun setLanguage(lang: String) {
         if (_uiState.value.currentLanguage != lang) {
             _uiState.value = _uiState.value.copy(currentLanguage = lang)
-            loadAllData(lang)
+            loadAllData(lang, forceRefresh = true)
         }
     }
 
@@ -102,6 +103,7 @@ class HomeViewModel : ViewModel() {
                 val achiJson = fetchRawJson("achievements")
                 val galleryJson = fetchRawJson("gallery")
 
+                val skillsList = if(!skillsJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(skillsJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val heroData = if(!heroJson.isNullOrEmpty()) gson.fromJson(heroJson, HeroData::class.java) else HeroData()
                 val profileList = if(!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(profileJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
@@ -117,7 +119,7 @@ class HomeViewModel : ViewModel() {
                     currentLanguage = lang,
                     about = aboutJson ?: "",
                     career = careerJson ?: "",
-                    skills = skillsJson ?: "",
+                    skills = skillsList,
                     profile = profileList,
                     experience = expList,
                     contact = contactList,
@@ -142,22 +144,25 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             val state = _uiState.value
 
-            // 1. Chuẩn bị Context dữ liệu (Gồm Link để AI không hỏi ngược)
-            val projectLinks = state.allPosts.filter { it.tag.contains("project", true) }
-                .joinToString("\n") { "- ${it.title}: post_detail/${it.id}" }
+            // Danh sách dự án dự phòng
+            val projectData = state.allPosts.joinToString("\n") { "- ${it.title} (ID: ${it.id})" }
 
             val systemPrompt = """
-            Bạn là Sakura AI 🌸. Hãy trả lời TRỰC TIẾP dựa trên thông tin này:
+            Bạn là Sakura AI 🌸.
+            DỮ LIỆU CỦA DŨNG:
             - Giới thiệu: ${state.about}
             - Kỹ năng: ${state.skills}
-            - Dự án & Link: $projectLinks
-            LƯU Ý: Nếu nhắc đến dự án, hãy kèm link theo mẫu 'post_detail/id'. Trả lời thân thiện, dùng icon 🌸.
+            - Danh sách bài viết/dự án: 
+            $projectData
+
+            QUY TẮC TRẢ LỜI:
+            1. Trả lời trực tiếp, thân thiện, dùng icon 🌸 và Markdown (**in đậm** cho các tiêu đề).
+            2. CHỈ KÈM LINK (định dạng: post_detail/ID) khi người dùng hỏi đích danh về một bài blog hoặc dự án cụ thể. 
+            3. Với các câu hỏi chung chung về thông tin cá nhân, KHÔNG liệt kê link.
         """.trimIndent()
 
-            // 2. Thêm tin nhắn User an toàn
+            // Thêm tin nhắn an toàn với update để tránh văng app
             _chatHistory.update { it + ChatMessage(userPrompt, isUser = true) }
-
-            // 3. Thêm trạng thái Typing (Dấu 3 chấm)
             _chatHistory.update { it + ChatMessage("", isUser = false, isTyping = true) }
 
             try {
@@ -167,18 +172,14 @@ class HomeViewModel : ViewModel() {
                         text(userPrompt)
                     }
                 )
+                val botResponse = response.text ?: "Sakura chưa có câu trả lời 🌸"
 
-                val botResponse = response.text ?: "Sakura đang bận xíu... 🌸"
-
-                // 4. Cập nhật câu trả lời: Xóa Typing, thêm Text thật
                 _chatHistory.update { history ->
                     history.filter { !it.isTyping } + ChatMessage(botResponse, isUser = false)
                 }
-
             } catch (e: Exception) {
-                // Xử lý khi lỗi để không văng App
                 _chatHistory.update { history ->
-                    history.filter { !it.isTyping } + ChatMessage("Lỗi kết nối rồi bạn ơi! 🌸", isUser = false)
+                    history.filter { !it.isTyping } + ChatMessage("Lỗi kết nối AI rồi... 🌸", isUser = false)
                 }
             }
         }
