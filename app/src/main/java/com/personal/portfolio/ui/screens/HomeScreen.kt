@@ -51,6 +51,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import com.personal.portfolio.ui.viewmodel.ChatMessage
+import dev.jeziellago.compose.markdowntext.MarkdownText
+import androidx.compose.ui.text.TextStyle
+import com.google.gson.Gson
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
@@ -59,7 +62,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     val uiState by viewModel.uiState.collectAsState()
 
     // --- 2. QUẢN LÝ TRẠNG THÁI ---
-    var currentLang by remember { mutableStateOf("vi") }
+    val currentLang = uiState.currentLanguage
     var nextLang by remember { mutableStateOf("vi") }
     var showAdmin by remember { mutableStateOf(false) }
     var showChatDialog by remember { mutableStateOf(false) }
@@ -91,7 +94,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
         nextLang = lang
         isSwitchingLang = true
         showIntro = true
-        viewModel.loadAllData(lang)
+        viewModel.setLanguage(lang)
     }
 
     // Tự động load data (ViewModel đã có logic chặn load lặp)
@@ -106,7 +109,6 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                 lang = displayLang,
                 onFinished = {
                     if (isSwitchingLang) {
-                        currentLang = nextLang
                         isSwitchingLang = false
                     }
                     showIntro = false
@@ -239,18 +241,23 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 if (!jpName.isNullOrEmpty()) NicknameBadge(label = "JP", name = jpName)
                                             }
 
+                                            val typewriterWords = remember(uiState.hero.typewriter) {
+                                                try {
+                                                    Gson().fromJson(uiState.hero.typewriter, Array<String>::class.java).toList()
+                                                } catch (e: Exception) {
+                                                    listOf("Developer", "Student") // Dự phòng nếu lỗi
+                                                }
+                                            }
+
                                             val typePrefix = when(currentLang) {
                                                 "vi" -> "Tôi là "
                                                 "jp" -> "私は"
                                                 else -> "I am a "
                                             }
+
                                             TypewriterText(
                                                 prefix = typePrefix,
-                                                texts = when(currentLang) {
-                                                    "vi" -> listOf("Lập trình viên", "Sinh viên CNTT", "Yêu công nghệ")
-                                                    "jp" -> listOf("開発者", "学生", "技術愛好 gia")
-                                                    else -> listOf("Developer", "IT Student", "Tech Enthusiast")
-                                                },
+                                                texts = typewriterWords,
                                                 modifier = Modifier.padding(bottom = 20.dp)
                                             )
 
@@ -320,7 +327,23 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         item { SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } } }
                         item { SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) } }
                         item { SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) } }
-                        item { SectionCard(staticText.sec_06_skills) { if(uiState.skills.isNotEmpty()) Text(uiState.skills, color = SakuraTextDark) else EmptyData(staticText.msg_no_skills) } }
+                        item {
+                            SectionCard(staticText.sec_06_skills) {
+                                if(uiState.skills.isNotEmpty()) {
+                                    uiState.skills.forEach { box ->
+                                        if(box.title.isNotEmpty()) {
+                                            Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp, bottom=5.dp))
+                                        }
+                                        box.items.forEach { item ->
+                                            Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) {
+                                                Text(item.label, color = SakuraTextLight)
+                                                Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark)
+                                            }
+                                        }
+                                    }
+                                } else EmptyData(staticText.msg_no_skills)
+                            }
+                        }
                         item { SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) } }
                         item { SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } } }
                         item { SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) } }
@@ -329,7 +352,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         item { SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) } }
                     }
                 }
-                if (showChatDialog) ChatDialog(onDismiss = { showChatDialog = false })
+                if (showChatDialog) ChatDialog(onDismiss = { showChatDialog = false }, navController = navController)
             }
         }
     }
@@ -387,21 +410,41 @@ fun TypewriterText(prefix: String, texts: List<String>, modifier: Modifier = Mod
 @Composable
 fun LanguageDropdown(currentLang: String, onLangSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val langs = mapOf("vi" to "Tiếng Việt 🇻🇳", "en" to "English 🇺🇸", "jp" to "日本語 🇯🇵")
+
+    // Rút gọn chữ hiển thị trên nút
+    val shortLangs = mapOf("vi" to "VI 🇻🇳", "en" to "EN 🇬🇧", "jp" to "JP 🇯🇵")
+    // Menu xả xuống hiển thị đầy đủ
+    val fullLangs = mapOf("vi" to "Tiếng Việt 🇻🇳", "en" to "English 🇬🇧", "jp" to "日本語 🇯🇵")
 
     Box {
-        Row(modifier = Modifier.background(SakuraGlass, CircleShape).border(1.dp, SakuraSecondary, CircleShape).clickable { expanded = true }.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(currentLang.uppercase(), color = SakuraPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Row(
+            modifier = Modifier
+                .background(Color.White, CircleShape)
+                .border(1.dp, SakuraSecondary, CircleShape)
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(shortLangs[currentLang] ?: "VI 🇻🇳", color = SakuraPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(Modifier.width(4.dp))
             Icon(Icons.Default.ArrowDropDown, null, tint = SakuraPrimary, modifier = Modifier.size(16.dp))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, offset = DpOffset(0.dp, 8.dp), modifier = Modifier.background(Color.White)) {
-            langs.forEach { (code, label) -> DropdownMenuItem(text = { Text(label, color = if(currentLang == code) SakuraPrimary else SakuraTextDark, fontWeight = if(currentLang == code) FontWeight.Bold else FontWeight.Normal) }, onClick = { onLangSelect(code); expanded = false }) }
+            fullLangs.forEach { (code, label) ->
+                DropdownMenuItem(
+                    text = {
+                        Text(label, color = if(currentLang == code) SakuraPrimary else SakuraTextDark, fontWeight = if(currentLang == code) FontWeight.Bold else FontWeight.Normal)
+                    },
+                    onClick = {
+                        onLangSelect(code)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
 
-// ... Giữ nguyên các component PoeticLoadingScreen, ChatDialog, scale, etc. từ code cũ ...
 fun Modifier.scale(scale: Float): Modifier = this.then(Modifier.graphicsLayer(scaleX = scale, scaleY = scale))
 
 @Composable
@@ -434,13 +477,11 @@ fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
-fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
+fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), navController: NavController) {
     val chatHistory by viewModel.chatHistory.collectAsState()
     var userText by remember { mutableStateOf("") }
     val scrollState = rememberLazyListState()
 
-
-    // Tự động cuộn xuống khi có tin nhắn mới
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) scrollState.animateScrollToItem(chatHistory.size - 1)
     }
@@ -452,35 +493,35 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Header (Giữ nguyên UI Sakura cũ)
                 Row(modifier = Modifier.fillMaxWidth().background(SakuraPrimary).padding(16.dp)) {
                     Text("🌸 Sakura AI Assistant", color = Color.White, fontWeight = FontWeight.Bold)
                 }
 
-                // Danh sách tin nhắn động
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier.weight(1f).background(Color(0xFFFFF0F5)).padding(16.dp)
                 ) {
                     items(chatHistory) { msg ->
-                        ChatBubble(msg)
+                        ChatBubble(msg = msg, onNavigate = { url ->
+                            // Bắt sự kiện bấm vào link
+                            if (url.startsWith("post_detail/")) {
+                                onDismiss() // Đóng dialog chat
+                                navController.navigate(url) // Nhảy sang trang chi tiết
+                            }
+                        })
                     }
                 }
 
-                // Ô nhập liệu
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
-                        value = userText,
-                        onValueChange = { userText = it },
-                        modifier = Modifier.weight(1f),
-                        shape = CircleShape,
-                        placeholder = { Text("Hỏi Sakura...") }
+                        value = userText, onValueChange = { userText = it },
+                        modifier = Modifier.weight(1f), shape = CircleShape, placeholder = { Text("Hỏi Sakura...") }
                     )
                     IconButton(
                         onClick = {
                             if (userText.isNotBlank()) {
                                 viewModel.sendMessage(userText)
-                                userText = "" // Xóa text sau khi gửi
+                                userText = ""
                             }
                         },
                         modifier = Modifier.padding(start = 8.dp).background(SakuraPrimary, CircleShape)
@@ -493,26 +534,23 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     }
 }
 
-// Trong HomeScreen.kt
 @Composable
-fun ChatBubble(msg: ChatMessage) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalAlignment = if (msg.isUser) Alignment.End else Alignment.Start
-    ) {
-        Surface(
-            color = if (msg.isUser) SakuraPrimary else Color.White,
-            shape = RoundedCornerShape(12.dp),
-            shadowElevation = 1.dp
-        ) {
+fun ChatBubble(msg: ChatMessage, onNavigate: (String) -> Unit) {
+    val alignment = if (msg.isUser) Alignment.End else Alignment.Start
+    val bgColor = if (msg.isUser) SakuraPrimary else Color.White
+    val textColor = if (msg.isUser) Color.White else SakuraTextDark
+
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalAlignment = alignment) {
+        Surface(color = bgColor, shape = RoundedCornerShape(12.dp), shadowElevation = 1.dp) {
             if (msg.isTyping) {
-                // Hiệu ứng 3 chấm nhấp nháy như Messenger
                 TypingAnimation()
             } else {
-                Text(
-                    text = msg.text,
+                MarkdownText(
+                    markdown = msg.text,
                     modifier = Modifier.padding(12.dp),
-                    color = if (msg.isUser) Color.White else SakuraTextDark
+                    style = TextStyle(color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Normal),
+                    // KÍCH HOẠT CHỨC NĂNG CLICK LINK
+                    onLinkClicked = { url -> onNavigate(url) }
                 )
             }
         }
