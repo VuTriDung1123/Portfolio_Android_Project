@@ -241,18 +241,18 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 if (!jpName.isNullOrEmpty()) NicknameBadge(label = "JP", name = jpName)
                                             }
 
-                                            val typewriterWords = remember(uiState.hero.typewriter) {
-                                                try {
-                                                    Gson().fromJson(uiState.hero.typewriter, Array<String>::class.java).toList()
-                                                } catch (e: Exception) {
-                                                    listOf("Developer", "Student") // Dự phòng nếu lỗi
-                                                }
-                                            }
-
                                             val typePrefix = when(currentLang) {
                                                 "vi" -> "Tôi là "
                                                 "jp" -> "私は"
                                                 else -> "I am a "
+                                            }
+
+                                            val typewriterWords = remember(uiState.hero.typewriter) {
+                                                try {
+                                                    Gson().fromJson(uiState.hero.typewriter, Array<String>::class.java).toList()
+                                                } catch (e: Exception) {
+                                                    listOf("Developer", "Student")
+                                                }
                                             }
 
                                             TypewriterText(
