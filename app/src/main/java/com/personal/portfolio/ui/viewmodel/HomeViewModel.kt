@@ -59,6 +59,7 @@ class HomeViewModel : ViewModel() {
     val chatHistory = _chatHistory.asStateFlow()
 
     // TRONG FILE: HomeViewModel.kt
+    // TRONG: HomeViewModel.kt
     fun setLanguage(lang: String) {
         if (_uiState.value.currentLanguage != lang) {
             _uiState.value = _uiState.value.copy(currentLanguage = lang)
