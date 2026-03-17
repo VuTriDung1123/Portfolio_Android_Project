@@ -35,6 +35,7 @@ import com.personal.portfolio.ui.components.SakuraFallingEffect
 import com.personal.portfolio.ui.components.ScrollReveal
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
@@ -42,9 +43,9 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     val currentLang = uiState.currentLanguage // Lấy ngôn ngữ từ ViewModel
 
     // State nội bộ của màn hình Blog
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedTag by remember { mutableStateOf("ALL") }
-    var isNewestFirst by remember { mutableStateOf(true) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedTag by rememberSaveable { mutableStateOf("ALL") }
+    var isNewestFirst by rememberSaveable { mutableStateOf(true) }
 
     // Dữ liệu tĩnh (Title, Hint...)
     val staticText = when(currentLang) {
@@ -267,7 +268,10 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             }
                         }
                     } else {
-                        itemsIndexed(displayedPosts) { index, post ->
+                        itemsIndexed(
+                            items = displayedPosts,
+                            key = { _, post -> post.id }
+                        ) { index, post ->
                             val calculatedDelay = (index % 5) * 100L
                             ScrollReveal(delayMillis = calculatedDelay) {
                                 BlogPostCard(post, navController)
