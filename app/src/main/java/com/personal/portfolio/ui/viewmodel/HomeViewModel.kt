@@ -234,4 +234,46 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
+
+
+    // --- QUẢN LÝ BLOG ---
+    fun savePost(post: Post, isEdit: Boolean) {
+        viewModelScope.launch {
+            adminMessage = "Đang lưu bài viết... ⏳"
+            try {
+                val response = if (isEdit) RetrofitClient.api.updatePost(post)
+                else RetrofitClient.api.createPost(post)
+                if (response.isSuccessful) {
+                    adminMessage = "Lưu bài viết thành công! 🌸"
+                    loadAllData(_uiState.value.currentLanguage, forceRefresh = true) // Tải lại list
+                } else adminMessage = "Lỗi lưu bài viết 🍃"
+            } catch (e: Exception) { adminMessage = "Lỗi mạng: ${e.message}" }
+        }
+    }
+
+    fun deletePost(id: String) {
+        viewModelScope.launch {
+            adminMessage = "Đang xóa... ⏳"
+            try {
+                val response = RetrofitClient.api.deletePost(id)
+                if (response.isSuccessful) {
+                    adminMessage = "Đã xóa! 🌸"
+                    loadAllData(_uiState.value.currentLanguage, forceRefresh = true)
+                }
+            } catch (e: Exception) { adminMessage = "Lỗi xóa: ${e.message}" }
+        }
+    }
+
+    // --- QUẢN LÝ SECTIONS (CHO TẤT CẢ BOX, FAQ, TEXT) ---
+    fun saveSectionJson(key: String, enJson: String, viJson: String, jpJson: String) {
+        viewModelScope.launch {
+            adminMessage = "Đang đồng bộ lên Web... ⏳"
+            try {
+                val requestData = mapOf("sectionKey" to key, "contentEn" to enJson, "contentVi" to viJson, "contentJp" to jpJson)
+                RetrofitClient.api.saveSectionContent(requestData)
+                adminMessage = "Lưu mục $key thành công! 🌸"
+                loadAllData(_uiState.value.currentLanguage, forceRefresh = true)
+            } catch (e: Exception) { adminMessage = "Lỗi: ${e.message}" }
+        }
+    }
 }

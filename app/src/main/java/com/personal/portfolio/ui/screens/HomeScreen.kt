@@ -324,9 +324,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         // --- CÁC SECTION KHÁC ---
                         item { SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) } }
                         item { SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) } }
-                        item { SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } } }
+                        item { SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag?.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag?.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag?.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } } }
                         item { SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) } }
-                        item { SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) } }
+                        item { SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag?.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) } }
                         item {
                             SectionCard(staticText.sec_06_skills) {
                                 if(uiState.skills.isNotEmpty()) {
@@ -345,9 +345,11 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             }
                         }
                         item { SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) } }
-                        item { SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } } }
-                        item { SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) } }
-                        item { SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag.lowercase().contains("project") }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) } }
+                        item { SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag?.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag?.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } } }
+                        item { SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag?.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) } }
+                        item { SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag?.lowercase()
+                            ?.contains("project")!!
+                        }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) } }
                         item { SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) } }
                         item { SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) } }
                     }
@@ -606,11 +608,12 @@ fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: N
         Column {
             // 1. Ảnh Thumbnail
             val imageList = try {
-                if (post.images.contains("http")) post.images.replace("[\"", "").replace("\"]", "").split("\",\"")[0]
+                if (post.images?.contains("http") ?: false) post.images?.replace("[\"", "")?.replace("\"]", "")
+                    ?.split("\",\"")[0]
                 else ""
             } catch (e: Exception) { "" }
 
-            if (imageList.isNotEmpty()) {
+            if (imageList?.isNotEmpty() ?: false) {
                 Image(
                     painter = rememberAsyncImagePainter(imageList.trim()),
                     contentDescription = null,
@@ -635,12 +638,14 @@ fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: N
                 )
                 Spacer(Modifier.height(4.dp))
                 Surface(color = SakuraPrimary, shape = RoundedCornerShape(4.dp)) {
-                    Text(
-                        text = post.tag,
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    post.tag?.let {
+                        Text(
+                            text = it,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
         }

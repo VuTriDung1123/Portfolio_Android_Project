@@ -16,6 +16,16 @@ interface SakuraApiService {
     // 3. Lấy danh sách bài viết/dự án
     @GET("api/posts")
     suspend fun getPosts(): List<Post>
+
+    // Trong interface SakuraApiService
+    @POST("api/posts")
+    suspend fun createPost(@Body post: Post): retrofit2.Response<Any>
+
+    @PUT("api/posts")
+    suspend fun updatePost(@Body post: Post): retrofit2.Response<Any>
+
+    @DELETE("api/posts")
+    suspend fun deletePost(@Query("id") id: String): retrofit2.Response<Any>
 }
 
 object RetrofitClient {
