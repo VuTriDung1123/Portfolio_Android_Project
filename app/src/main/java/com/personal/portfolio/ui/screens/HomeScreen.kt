@@ -53,6 +53,10 @@ import com.personal.portfolio.ui.viewmodel.ChatMessage
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import androidx.compose.ui.text.TextStyle
 import com.google.gson.Gson
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.net.toUri
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
@@ -388,7 +392,44 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
-                                SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) }
+                                SectionCard(staticText.sec_12_contact) {
+                                    if (uiState.contact.isNotEmpty()) {
+                                        // Duyệt qua từng Box giống hệt giao diện Web
+                                        uiState.contact.forEach { box ->
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(bottom = 16.dp)
+                                                    .background(Color(0xFFFFF0F5), RoundedCornerShape(16.dp)) // Phủ nền hồng phấn riêng cho từng Box
+                                                    .border(1.dp, Color(0xFFFFC1E3), RoundedCornerShape(16.dp))
+                                                    .padding(16.dp)
+                                            ) {
+                                                // Tiêu đề của Box (VD: Liên hệ chính, Mạng xã hội)
+                                                if (box.title.isNotEmpty()) {
+                                                    Text(
+                                                        text = "✿ ${box.title}",
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = SakuraPrimary,
+                                                        fontSize = 16.sp,
+                                                        modifier = Modifier.padding(bottom = 8.dp)
+                                                    )
+                                                    HorizontalDivider(
+                                                        color = SakuraSecondary.copy(alpha = 0.5f),
+                                                        thickness = 1.dp,
+                                                        modifier = Modifier.padding(bottom = 12.dp)
+                                                    )
+                                                }
+
+                                                // Render các dòng thông tin bên trong Box
+                                                box.items.forEach { item ->
+                                                    ContactRowWrapper(item.label, item.value)
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        EmptyData(staticText.msg_no_contact)
+                                    }
+                                }
                             }
                         }
                     }
@@ -618,10 +659,67 @@ fun EmptyData(msg: String = "Chưa có dữ liệu 🍃") {
 
 @Composable
 fun ContactRowWrapper(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).background(Color.White, RoundedCornerShape(12.dp)).border(1.dp, SakuraSecondary, RoundedCornerShape(12.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        val icon = when { label.contains("Mail", true) || label.contains("Email", true) -> "✉️"; label.contains("Phone", true) || label.contains("Tel", true) -> "📞"; label.contains("Git", true) -> "🐙"; label.contains("Linked", true) -> "💼"; else -> "🌐" }
-        Text(icon, fontSize = 20.sp); Spacer(Modifier.width(12.dp))
-        Column { Text(label, fontSize = 11.sp, color = SakuraTextLight); Text(value, fontSize = 14.sp, color = SakuraTextDark, fontWeight = FontWeight.SemiBold) }
+    val context = LocalContext.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .border(1.dp, SakuraSecondary, RoundedCornerShape(12.dp))
+            .clickable {
+                // TỰ ĐỘNG ĐỊNH TUYẾN KHI BẤM VÀO
+                try {
+                    when {
+                        value.contains("@") -> { // Mở app Gửi Email
+                            val intent = Intent(Intent.ACTION_SENDTO,
+                                "mailto:${value.trim()}".toUri())
+                            context.startActivity(intent)
+                        }
+                        value.startsWith("http") -> { // Mở Trình duyệt
+                            val intent = Intent(Intent.ACTION_VIEW, value.trim().toUri())
+                            context.startActivity(intent)
+                        }
+                        value.matches(Regex("^[0-9+()\\s-]*$")) && value.length > 8 -> { // Mở app Gọi điện
+                            val cleanNumber = value.replace(Regex("[\\s-]"), "")
+                            val intent = Intent(Intent.ACTION_DIAL, "tel:$cleanNumber".toUri())
+                            context.startActivity(intent)
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Bỏ qua nếu máy không có app hỗ trợ
+                }
+            }
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Tinh chỉnh icon đa dạng hơn
+        val icon = when {
+            label.contains("Mail", true) || label.contains("Email", true) -> "✉️"
+            label.contains("Phone", true) || label.contains("Tel", true) || label.contains("Thoại", true) -> "📞"
+            label.contains("Git", true) -> "🐙"
+            label.contains("Linked", true) -> "💼"
+            label.contains("Face", true) -> "📘"
+            label.contains("Insta", true) -> "📸"
+            label.contains("X", true) || label.contains("Twitter", true) -> "🐦"
+            else -> "🌐"
+        }
+
+        Text(icon, fontSize = 20.sp)
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, fontSize = 11.sp, color = SakuraTextLight)
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                // Tô màu xanh dương nếu nó là link hoặc email để người dùng biết có thể bấm
+                color = if (value.startsWith("http") || value.contains("@")) Color(0xFF1E88E5) else SakuraTextDark,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1, // Ép trên 1 dòng
+                overflow = TextOverflow.Ellipsis // Chống tràn UI với các link Github quá dài
+            )
+        }
     }
 }
 
@@ -665,7 +763,7 @@ fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: N
                     fontWeight = FontWeight.Bold,
                     color = SakuraTextDark,
                     maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.height(4.dp))
                 Surface(color = SakuraPrimary, shape = RoundedCornerShape(4.dp)) {
