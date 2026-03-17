@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -30,7 +29,7 @@ private data class Petal(
 
 @Composable
 fun SakuraFallingEffect() {
-    val density = LocalDensity.current
+    LocalDensity.current
     val petals = remember {
         List(30) { // Giảm số lượng chút cho đỡ rối
             Petal(
@@ -63,7 +62,7 @@ fun SakuraFallingEffect() {
 
         petals.forEach { petal ->
             // Tính toán vị trí
-            var currentY = (petal.y + (time * petal.speed * 0.01f)) % 1.2f
+            val currentY = (petal.y + (time * petal.speed * 0.01f)) % 1.2f
             val sway = sin(time * petal.swaySpeed * 0.005f + petal.offset) * petal.swayAmount
             val currentX = (petal.x + sway) * width
             val drawY = if (currentY > 1f) -100f else currentY * height

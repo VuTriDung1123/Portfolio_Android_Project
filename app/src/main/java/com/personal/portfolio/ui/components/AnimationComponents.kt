@@ -16,7 +16,7 @@ fun ScrollReveal(
     var isVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(delayMillis) // Độ trễ để tạo hiệu ứng nối tiếp giống Web (delay = i * 0.1)
+        delay(delayMillis)
         isVisible = true
     }
 

@@ -293,11 +293,13 @@ fun BlogPostCard(post: Post, navController: NavController) {
             val imageList = try {
                 // Giả sử post.images là chuỗi JSON "['url1', 'url2']"
                 // Ở đây mình parse sơ bộ hoặc dùng ảnh mặc định
-                if (post.images.contains("http")) post.images.replace("[\"", "").replace("\"]", "").split("\",\"")[0]
+                if (post.images?.contains("http") ?: false ) post.images?.replace("[\"", "")
+                    ?.replace("\"]", "")
+                    ?.split("\",\"")[0]
                 else ""
             } catch (e: Exception) { "" }
 
-            if (imageList.isNotEmpty()) {
+            if (imageList?.isNotEmpty() ?: false) {
                 Image(
                     painter = rememberAsyncImagePainter(imageList),
                     contentDescription = null,
@@ -359,13 +361,15 @@ fun BlogPostCard(post: Post, navController: NavController) {
 
                 Spacer(Modifier.height(4.dp))
 
-                Text(
-                    text = post.content,
-                    fontSize = 14.sp,
-                    color = SakuraTextLight,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
+                post.content?.let {
+                    Text(
+                        text = it,
+                        fontSize = 14.sp,
+                        color = SakuraTextLight,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

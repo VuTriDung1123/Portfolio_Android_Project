@@ -84,7 +84,7 @@ fun PostDetailScreen(
                 val images = remember(post.images) {
                     try {
                         val regex = "(https?://[^\"]+)".toRegex()
-                        regex.findAll(post.images).map { it.value.trim() }.toList()
+                        regex.findAll(post.images ?: "").map { it.value.trim() }.toList()
                     } catch (e: Exception) { emptyList() }
                 }
 

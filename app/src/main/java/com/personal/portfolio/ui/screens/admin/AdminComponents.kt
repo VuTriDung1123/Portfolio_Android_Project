@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.personal.portfolio.data.remote.* // Import các Model
+import com.personal.portfolio.data.remote.*
 import com.personal.portfolio.ui.theme.SakuraPrimary
 import com.personal.portfolio.ui.theme.SakuraSecondary
 

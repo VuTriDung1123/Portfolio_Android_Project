@@ -2,13 +2,13 @@ package com.personal.portfolio.data.remote
 
 // --- 1. MODEL CHO POST ---
 data class Post(
-    val id: String,
-    var title: String, // var để sửa được
-    var tag: String,
-    var language: String,
-    var content: String,
-    var images: String,
-    val createdAt: String
+    val id: String = "",
+    var title: String = "",
+    var tag: String? = "ALL",
+    var language: String? = "vi",
+    var content: String? = "",
+    var images: String? = "[]",
+    val createdAt: String? = ""
 )
 
 // --- 2. MODEL API RESPONSE ---
@@ -63,12 +63,4 @@ data class FaqItem(
     var a: String = ""
 )
 
-// Config
-data class GlobalConfig(
-    var resumeUrl: String = "",
-    var isOpenForWork: Boolean = true
-)
-
-// Login
-data class LoginRequest(val pass: String)
 data class LoginResponse(val success: Boolean)

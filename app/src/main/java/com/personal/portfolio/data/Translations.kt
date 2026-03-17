@@ -1,7 +1,5 @@
 package com.personal.portfolio.data
 
-import com.personal.portfolio.R
-
 // --- MODELS ---
 data class InfoItem(val label: String, val value: String)
 data class ProjectItem(val id: String, val title: String, val desc: String, val tech: String, val imageRes: Int)
