@@ -1,8 +1,14 @@
 package com.personal.portfolio.ui.screens
 
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,15 +16,56 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,35 +75,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.gson.Gson
 import com.personal.portfolio.R
 import com.personal.portfolio.data.SakuraData
-import com.personal.portfolio.ui.components.*
+import com.personal.portfolio.ui.components.FAQItem
+import com.personal.portfolio.ui.components.SakuraFallingEffect
+import com.personal.portfolio.ui.components.ScrollReveal
+import com.personal.portfolio.ui.components.SectionCard
 import com.personal.portfolio.ui.screens.admin.AdminScreen
-import com.personal.portfolio.ui.theme.*
-import com.personal.portfolio.ui.viewmodel.HomeViewModel
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.automirrored.filled.Send
+import com.personal.portfolio.ui.theme.SakuraGlass
+import com.personal.portfolio.ui.theme.SakuraPortfolioTheme
+import com.personal.portfolio.ui.theme.SakuraPrimary
+import com.personal.portfolio.ui.theme.SakuraSecondary
+import com.personal.portfolio.ui.theme.SakuraTextDark
+import com.personal.portfolio.ui.theme.SakuraTextLight
 import com.personal.portfolio.ui.viewmodel.ChatMessage
+import com.personal.portfolio.ui.viewmodel.HomeViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import androidx.compose.ui.text.TextStyle
-import com.google.gson.Gson
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.core.net.toUri
+import kotlinx.coroutines.delay
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
@@ -85,7 +136,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     }
 
     // LẤY TEXT TIÊU ĐỀ
-    val staticText = when(currentLang) {
+    val staticText = when (currentLang) {
         "en" -> SakuraData.en
         "jp" -> SakuraData.jp
         else -> SakuraData.vi
@@ -142,8 +193,19 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     else
                                         painterResource(R.drawable.vutridung)
 
-                                    Image(painter = avatarPainter, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(48.dp).clip(CircleShape))
-                                    Image(painter = painterResource(R.drawable.sakura_avatar), contentDescription = null, modifier = Modifier.fillMaxSize())
+                                    Image(
+                                        painter = avatarPainter,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                    )
+                                    Image(
+                                        painter = painterResource(R.drawable.sakura_avatar),
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
                                 }
                                 Spacer(Modifier.width(10.dp))
                                 Column {
@@ -160,17 +222,27 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     )
                                 }
                             }
-                            LanguageDropdown(currentLang = currentLang, onLangSelect = { switchLanguage(it) })
+                            LanguageDropdown(
+                                currentLang = currentLang,
+                                onLangSelect = { switchLanguage(it) })
                         }
                     },
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { showChatDialog = true }, containerColor = SakuraPrimary, contentColor = Color.White, shape = CircleShape) {
+                        FloatingActionButton(
+                            onClick = { showChatDialog = true },
+                            containerColor = SakuraPrimary,
+                            contentColor = Color.White,
+                            shape = CircleShape
+                        ) {
                             Icon(Icons.Default.AutoAwesome, "AI Chat")
                         }
                     }
                 ) { padding ->
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(horizontal = 16.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
                         item {
@@ -195,13 +267,21 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             painter = painterResource(R.drawable.sakura_avatar),
                                             contentDescription = null,
                                             tint = Color.White.copy(alpha = 0.4f),
-                                            modifier = Modifier.size(400.dp).align(Alignment.BottomCenter).offset(y = 50.dp)
+                                            modifier = Modifier
+                                                .size(400.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .offset(y = 50.dp)
                                         )
 
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(top = 80.dp, bottom = 20.dp, start = 16.dp, end = 16.dp),
+                                                .padding(
+                                                    top = 80.dp,
+                                                    bottom = 20.dp,
+                                                    start = 16.dp,
+                                                    end = 16.dp
+                                                ),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Surface(
@@ -211,7 +291,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             ) {
                                                 Text(
                                                     text = uiState.hero.greeting,
-                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                                    modifier = Modifier.padding(
+                                                        horizontal = 16.dp,
+                                                        vertical = 6.dp
+                                                    ),
                                                     color = SakuraPrimary,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Bold
@@ -221,7 +304,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
                                             Text(
                                                 text = uiState.hero.fullName,
-                                                style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Black),
+                                                style = MaterialTheme.typography.displayMedium.copy(
+                                                    fontWeight = FontWeight.Black
+                                                ),
                                                 color = SakuraTextDark,
                                                 textAlign = TextAlign.Center
                                             )
@@ -232,27 +317,41 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                     .horizontalScroll(rememberScrollState()),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                val enName = uiState.hero.nickName1.ifEmpty { staticText.hero["sub_name_1"] }
-                                                val jpName = uiState.hero.nickName2.ifEmpty { staticText.hero["sub_name_2"] }
+                                                val enName =
+                                                    uiState.hero.nickName1.ifEmpty { staticText.hero["sub_name_1"] }
+                                                val jpName =
+                                                    uiState.hero.nickName2.ifEmpty { staticText.hero["sub_name_2"] }
 
-                                                if (!enName.isNullOrEmpty()) NicknameBadge(label = "EN", name = enName)
-                                                if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) Spacer(Modifier.width(8.dp))
-                                                if (!jpName.isNullOrEmpty()) NicknameBadge(label = "JP", name = jpName)
+                                                if (!enName.isNullOrEmpty()) NicknameBadge(
+                                                    label = "EN",
+                                                    name = enName
+                                                )
+                                                if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) Spacer(
+                                                    Modifier.width(8.dp)
+                                                )
+                                                if (!jpName.isNullOrEmpty()) NicknameBadge(
+                                                    label = "JP",
+                                                    name = jpName
+                                                )
                                             }
 
-                                            val typePrefix = when(currentLang) {
+                                            val typePrefix = when (currentLang) {
                                                 "vi" -> "Tôi là "
                                                 "jp" -> "私は"
                                                 else -> "I am a "
                                             }
 
-                                            val typewriterWords = remember(uiState.hero.typewriter) {
-                                                try {
-                                                    Gson().fromJson(uiState.hero.typewriter, Array<String>::class.java).toList()
-                                                } catch (_: Exception) {
-                                                    listOf("Developer", "Student")
+                                            val typewriterWords =
+                                                remember(uiState.hero.typewriter) {
+                                                    try {
+                                                        Gson().fromJson(
+                                                            uiState.hero.typewriter,
+                                                            Array<String>::class.java
+                                                        ).toList()
+                                                    } catch (_: Exception) {
+                                                        listOf("Developer", "Student")
+                                                    }
                                                 }
-                                            }
 
                                             TypewriterText(
                                                 prefix = typePrefix,
@@ -263,21 +362,31 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             Row(
                                                 horizontalArrangement = Arrangement.Center,
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 8.dp)
                                             ) {
                                                 Button(
                                                     onClick = { navController.navigate("blog") },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = SakuraPrimary)
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = SakuraPrimary
+                                                    )
                                                 ) { Text("Project", fontSize = 13.sp) }
 
                                                 Spacer(Modifier.width(8.dp))
 
                                                 OutlinedButton(
                                                     onClick = { /* CV link */ },
-                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraPrimary),
+                                                    colors = ButtonDefaults.outlinedButtonColors(
+                                                        contentColor = SakuraPrimary
+                                                    ),
                                                     border = BorderStroke(1.dp, SakuraPrimary)
                                                 ) {
-                                                    Icon(Icons.Default.Download, null, modifier = Modifier.size(16.dp))
+                                                    Icon(
+                                                        Icons.Default.Download,
+                                                        null,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
                                                     Spacer(Modifier.width(4.dp))
                                                     Text("CV", fontSize = 13.sp)
                                                 }
@@ -286,7 +395,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
 
                                                 OutlinedButton(
                                                     onClick = { navController.navigate("faq") },
-                                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SakuraTextDark),
+                                                    colors = ButtonDefaults.outlinedButtonColors(
+                                                        contentColor = SakuraTextDark
+                                                    ),
                                                     border = BorderStroke(1.dp, Color.White)
                                                 ) { Text("FAQ", fontSize = 13.sp) }
                                             }
@@ -294,7 +405,9 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     }
 
                                     Box(
-                                        modifier = Modifier.size(130.dp).align(Alignment.TopCenter),
+                                        modifier = Modifier
+                                            .size(130.dp)
+                                            .align(Alignment.TopCenter),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         val painter = if (uiState.hero.avatarUrl.isNotEmpty())
@@ -306,12 +419,17 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             painter = painter,
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
-                                            modifier = Modifier.size(130.dp).clip(CircleShape).border(4.dp, Color.White, CircleShape)
+                                            modifier = Modifier
+                                                .size(130.dp)
+                                                .clip(CircleShape)
+                                                .border(4.dp, Color.White, CircleShape)
                                         )
                                         Image(
                                             painter = painterResource(R.drawable.sakura_avatar),
                                             contentDescription = null,
-                                            modifier = Modifier.fillMaxSize().scale(1.25f)
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .scale(1.25f)
                                         )
                                     }
                                 }
@@ -323,41 +441,122 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         // --- CÁC SECTION KHÁC ---
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) }
+                                SectionCard(staticText.sec_01_about) {
+                                    if (uiState.about.isNotEmpty()) Text(
+                                        uiState.about,
+                                        color = SakuraTextDark,
+                                        lineHeight = 24.sp
+                                    ) else EmptyData(staticText.msg_no_about)
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
-                                SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) }
+                                SectionCard(staticText.sec_02_profile) {
+                                    if (uiState.profile.isNotEmpty()) {
+                                        uiState.profile.forEach { box ->
+                                            if (box.title.isNotEmpty()) Text(
+                                                "★ ${box.title}",
+                                                fontWeight = FontWeight.Bold,
+                                                color = SakuraPrimary,
+                                                modifier = Modifier.padding(top = 10.dp)
+                                            ); box.items.forEach { item ->
+                                            Row(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp),
+                                                Arrangement.SpaceBetween
+                                            ) {
+                                                Text(item.label, color = SakuraTextLight); Text(
+                                                item.value,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SakuraTextDark
+                                            )
+                                            }
+                                        }
+                                        }
+                                    } else EmptyData(staticText.msg_no_profile)
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag?.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag?.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag?.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } }
+                                SectionCard(staticText.sec_03_cert) {
+                                    Column {
+                                        val itCerts =
+                                            uiState.allPosts.filter { it.tag?.lowercase() == "tech_certs" }; HorizontalPostLane(
+                                        "❖ IT Certificates",
+                                        itCerts,
+                                        navController
+                                    ); Spacer(Modifier.height(16.dp))
+                                        val langCerts =
+                                            uiState.allPosts.filter { it.tag?.lowercase() == "lang_certs" }; HorizontalPostLane(
+                                        "❖ Language Certificates",
+                                        langCerts,
+                                        navController
+                                    ); Spacer(Modifier.height(16.dp))
+                                        val otherCerts =
+                                            uiState.allPosts.filter { it.tag?.lowercase() == "other_certs" }; HorizontalPostLane(
+                                        "❖ Other Certificates",
+                                        otherCerts,
+                                        navController
+                                    )
+                                    }
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
-                                SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) }
+                                SectionCard(staticText.sec_04_career) {
+                                    if (uiState.career.isNotEmpty()) Text(
+                                        uiState.career,
+                                        fontStyle = FontStyle.Italic,
+                                        color = SakuraTextDark
+                                    ) else EmptyData(staticText.msg_no_career)
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag?.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) }
+                                SectionCard(staticText.sec_05_achievements) {
+                                    val achievements =
+                                        uiState.allPosts.filter { it.tag?.lowercase() == "achievements" }; HorizontalPostLane(
+                                    null,
+                                    achievements,
+                                    navController
+                                )
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
                                 SectionCard(staticText.sec_06_skills) {
-                                    if(uiState.skills.isNotEmpty()) {
+                                    if (uiState.skills.isNotEmpty()) {
                                         uiState.skills.forEach { box ->
-                                            if(box.title.isNotEmpty()) {
-                                                Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp, bottom=5.dp))
+                                            if (box.title.isNotEmpty()) {
+                                                Text(
+                                                    "★ ${box.title}",
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = SakuraPrimary,
+                                                    modifier = Modifier.padding(
+                                                        top = 10.dp,
+                                                        bottom = 5.dp
+                                                    )
+                                                )
                                             }
                                             box.items.forEach { item ->
-                                                Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) {
+                                                Row(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 4.dp),
+                                                    Arrangement.SpaceBetween
+                                                ) {
                                                     Text(item.label, color = SakuraTextLight)
-                                                    Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark)
+                                                    Text(
+                                                        item.value,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = SakuraTextDark
+                                                    )
                                                 }
                                             }
                                         }
@@ -367,27 +566,116 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) }
+                                SectionCard(staticText.sec_07_exp) {
+                                    if (uiState.experience.isNotEmpty()) {
+                                        uiState.experience.forEach { group ->
+                                            Text(
+                                                group.title,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SakuraPrimary,
+                                                fontSize = 16.sp,
+                                                modifier = Modifier.padding(vertical = 8.dp)
+                                            ); group.items.forEach { exp ->
+                                            Column(
+                                                Modifier.padding(
+                                                    bottom = 12.dp,
+                                                    start = 10.dp
+                                                )
+                                            ) {
+                                                Text(
+                                                    exp.role,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = SakuraTextDark
+                                                ); Text(
+                                                exp.time,
+                                                fontSize = 12.sp,
+                                                color = SakuraPrimary
+                                            ); exp.details.forEach { d ->
+                                                Text(
+                                                    "• $d",
+                                                    fontSize = 13.sp,
+                                                    color = SakuraTextLight
+                                                )
+                                            }
+                                            }
+                                        }
+                                        }
+                                    } else EmptyData(staticText.msg_no_exp)
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
-                                SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag?.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag?.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } }
+                                SectionCard(staticText.sec_08_proj) {
+                                    Column {
+                                        val uniProjs =
+                                            uiState.allPosts.filter { it.tag?.lowercase() == "uni_projects" }; HorizontalPostLane(
+                                        "❖ University Projects",
+                                        uniProjs,
+                                        navController
+                                    ); Spacer(Modifier.height(16.dp))
+                                        val perProjs =
+                                            uiState.allPosts.filter { it.tag?.lowercase() == "personal_projects" }; HorizontalPostLane(
+                                        "❖ Personal Projects",
+                                        perProjs,
+                                        navController
+                                    )
+                                    }
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag?.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) }
+                                SectionCard(staticText.sec_09_gallery) {
+                                    val itEvents =
+                                        uiState.allPosts.filter { it.tag?.lowercase() == "it_events" }; HorizontalPostLane(
+                                    null,
+                                    itEvents,
+                                    navController
+                                )
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 150) {
-                                SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag?.lowercase()?.contains("project")!! }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) }
+                                SectionCard(staticText.sec_10_blog) {
+                                    val blogs = uiState.allPosts.filter {
+                                        !it.tag?.lowercase()?.contains("project")!!
+                                    }.take(3); if (blogs.isNotEmpty()) {
+                                    Column {
+                                        Row(Modifier.horizontalScroll(rememberScrollState())) {
+                                            blogs.forEach {
+                                                HomePostCard(
+                                                    it,
+                                                    navController
+                                                )
+                                            }
+                                        }; TextButton(
+                                        onClick = { navController.navigate("blog") },
+                                        Modifier.align(Alignment.End)
+                                    ) {
+                                        Text(
+                                            staticText.btn_view_all,
+                                            color = SakuraPrimary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    }
+                                } else EmptyData(staticText.msg_no_blog)
+                                }
                             }
                         }
                         item {
                             ScrollReveal(delayMillis = 100) {
-                                SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) }
+                                SectionCard(staticText.sec_11_faq) {
+                                    if (uiState.faq.isNotEmpty()) {
+                                        uiState.faq.take(3)
+                                            .forEach { FAQItem(it.q, it.a) }; TextButton(
+                                            onClick = { navController.navigate("faq") },
+                                            Modifier.fillMaxWidth()
+                                        ) { Text(staticText.btn_view_all) }
+                                    } else EmptyData(staticText.msg_no_faq)
+                                }
                             }
                         }
                         item {
@@ -400,8 +688,15 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(bottom = 16.dp)
-                                                    .background(Color(0xFFFFF0F5), RoundedCornerShape(16.dp)) // Phủ nền hồng phấn riêng cho từng Box
-                                                    .border(1.dp, Color(0xFFFFC1E3), RoundedCornerShape(16.dp))
+                                                    .background(
+                                                        Color(0xFFFFF0F5),
+                                                        RoundedCornerShape(16.dp)
+                                                    ) // Phủ nền hồng phấn riêng cho từng Box
+                                                    .border(
+                                                        1.dp,
+                                                        Color(0xFFFFC1E3),
+                                                        RoundedCornerShape(16.dp)
+                                                    )
                                                     .padding(16.dp)
                                             ) {
                                                 // Tiêu đề của Box (VD: Liên hệ chính, Mạng xã hội)
@@ -434,7 +729,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
                     }
                 }
-                if (showChatDialog) ChatDialog(onDismiss = { showChatDialog = false }, navController = navController)
+                if (showChatDialog) ChatDialog(
+                    onDismiss = { showChatDialog = false },
+                    navController = navController
+                )
             }
         }
     }
@@ -506,15 +804,34 @@ fun LanguageDropdown(currentLang: String, onLangSelect: (String) -> Unit) {
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(shortLangs[currentLang] ?: "VI 🇻🇳", color = SakuraPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(
+                shortLangs[currentLang] ?: "VI 🇻🇳",
+                color = SakuraPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
             Spacer(Modifier.width(4.dp))
-            Icon(Icons.Default.ArrowDropDown, null, tint = SakuraPrimary, modifier = Modifier.size(16.dp))
+            Icon(
+                Icons.Default.ArrowDropDown,
+                null,
+                tint = SakuraPrimary,
+                modifier = Modifier.size(16.dp)
+            )
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, offset = DpOffset(0.dp, 8.dp), modifier = Modifier.background(Color.White)) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(0.dp, 8.dp),
+            modifier = Modifier.background(Color.White)
+        ) {
             fullLangs.forEach { (code, label) ->
                 DropdownMenuItem(
                     text = {
-                        Text(label, color = if(currentLang == code) SakuraPrimary else SakuraTextDark, fontWeight = if(currentLang == code) FontWeight.Bold else FontWeight.Normal)
+                        Text(
+                            label,
+                            color = if (currentLang == code) SakuraPrimary else SakuraTextDark,
+                            fontWeight = if (currentLang == code) FontWeight.Bold else FontWeight.Normal
+                        )
                     },
                     onClick = {
                         onLangSelect(code)
@@ -526,14 +843,50 @@ fun LanguageDropdown(currentLang: String, onLangSelect: (String) -> Unit) {
     }
 }
 
-fun Modifier.scale(scale: Float): Modifier = this.then(Modifier.graphicsLayer(scaleX = scale, scaleY = scale))
+fun Modifier.scale(scale: Float): Modifier =
+    this.then(Modifier.graphicsLayer(scaleX = scale, scaleY = scale))
 
 @Composable
 fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
-    val poems = when(lang) {
-        "en" -> listOf("Compiling coffee into code...", "It's not a bug, it's a feature! 🐞", "git push --force (just kidding)...", "Checking StackOverflow for answers...", "Sudo make me a sandwich...", "Works on my machine! ¯\\_(ツ)_/¯", "Trying to exit Vim...", "Hello World! Loading dreams...", "Refactoring spaghetti code...", "Deleting production database... (JK)")
-        "jp" -> listOf("バグ修正中... (Fixing bugs...)", "コーヒーをコードに変換中... ☕", "本番環境でテスト中... (Testing in prod)", "全集中、コードの呼吸... (Total concentration)", "サーバーが応答しません... 冗談です (JK)", "猫がキーボードの上を歩いています... 🐈", "WiFiを探しています...", "AIが支配する前にデプロイ中...", "技術的負債を返済中... (Paying tech debt)", "Ctrl + Z の魔法...")
-        else -> listOf("Code chạy đúng là do tâm linh...", "3000 dòng code, 1 dòng lỗi...", "Đang triệu hồi bug đi chỗ khác...", "Uống cafe, fix bug, lặp lại... ☕", "Tính năng này là 'tính năng ẩn'...", "Server đang thở oxy...", "Code xong rồi, chỉ chưa chạy thôi...", "Đang Google cách sửa lỗi...", "Đừng tắt máy, đang hack NASA...", "Dev đang ngủ, vui lòng đợi...")
+    val poems = when (lang) {
+        "en" -> listOf(
+            "Compiling coffee into code...",
+            "It's not a bug, it's a feature! 🐞",
+            "git push --force (just kidding)...",
+            "Checking StackOverflow for answers...",
+            "Sudo make me a sandwich...",
+            "Works on my machine! ¯\\_(ツ)_/¯",
+            "Trying to exit Vim...",
+            "Hello World! Loading dreams...",
+            "Refactoring spaghetti code...",
+            "Deleting production database... (JK)"
+        )
+
+        "jp" -> listOf(
+            "バグ修正中... (Fixing bugs...)",
+            "コーヒーをコードに変換中... ☕",
+            "本番環境でテスト中... (Testing in prod)",
+            "全集中、コードの呼吸... (Total concentration)",
+            "サーバーが応答しません... 冗談です (JK)",
+            "猫がキーボードの上を歩いています... 🐈",
+            "WiFiを探しています...",
+            "AIが支配する前にデプロイ中...",
+            "技術的負債を返済中... (Paying tech debt)",
+            "Ctrl + Z の魔法..."
+        )
+
+        else -> listOf(
+            "Code chạy đúng là do tâm linh...",
+            "3000 dòng code, 1 dòng lỗi...",
+            "Đang triệu hồi bug đi chỗ khác...",
+            "Uống cafe, fix bug, lặp lại... ☕",
+            "Tính năng này là 'tính năng ẩn'...",
+            "Server đang thở oxy...",
+            "Code xong rồi, chỉ chưa chạy thôi...",
+            "Đang Google cách sửa lỗi...",
+            "Đừng tắt máy, đang hack NASA...",
+            "Dev đang ngủ, vui lòng đợi..."
+        )
     }
     val randomPoems = remember { poems.shuffled().take(3) }
     var currentLineIndex by remember { mutableIntStateOf(0) }
@@ -547,18 +900,39 @@ fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
         }
         onFinished()
     }
-    Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
+    Box(Modifier
+        .fillMaxSize()
+        .background(Color.White), contentAlignment = Alignment.Center) {
         SakuraFallingEffect()
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("👾", fontSize = 40.sp, modifier = Modifier.padding(bottom = 20.dp).graphicsLayer { rotationZ = alphaAnim.value * 20f })
-            Text(randomPoems.getOrElse(currentLineIndex) { "" }, color = SakuraTextDark, fontSize = 18.sp, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp).alpha(alphaAnim.value))
+            Text(
+                "👾",
+                fontSize = 40.sp,
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .graphicsLayer { rotationZ = alphaAnim.value * 20f })
+            Text(
+                randomPoems.getOrElse(currentLineIndex) { "" },
+                color = SakuraTextDark,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(horizontal = 40.dp)
+                    .alpha(alphaAnim.value)
+            )
         }
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
-fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), navController: NavController) {
+fun ChatDialog(
+    onDismiss: () -> Unit,
+    viewModel: HomeViewModel = viewModel(),
+    navController: NavController
+) {
     val chatHistory by viewModel.chatHistory.collectAsState()
     var userText by remember { mutableStateOf("") }
     val scrollState = rememberLazyListState()
@@ -569,18 +943,26 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), na
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth().height(550.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(550.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                Row(modifier = Modifier.fillMaxWidth().background(SakuraPrimary).padding(16.dp)) {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .background(SakuraPrimary)
+                    .padding(16.dp)) {
                     Text("🌸 Sakura AI Assistant", color = Color.White, fontWeight = FontWeight.Bold)
                 }
 
                 LazyColumn(
                     state = scrollState,
-                    modifier = Modifier.weight(1f).background(Color(0xFFFFF0F5)).padding(16.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0xFFFFF0F5))
+                        .padding(16.dp)
                 ) {
                     items(chatHistory) { msg ->
                         ChatBubble(msg = msg, onNavigate = { url ->
@@ -593,10 +975,18 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), na
                     }
                 }
 
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     OutlinedTextField(
-                        value = userText, onValueChange = { userText = it },
-                        modifier = Modifier.weight(1f), shape = CircleShape, placeholder = { Text("Hỏi Sakura...") }
+                        value = userText,
+                        onValueChange = { userText = it },
+                        modifier = Modifier.weight(1f),
+                        shape = CircleShape,
+                        placeholder = { Text("Hỏi Sakura...") }
                     )
                     IconButton(
                         onClick = {
@@ -605,7 +995,9 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), na
                                 userText = ""
                             }
                         },
-                        modifier = Modifier.padding(start = 8.dp).background(SakuraPrimary, CircleShape)
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .background(SakuraPrimary, CircleShape)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color.White)
                     }
@@ -621,7 +1013,12 @@ fun ChatBubble(msg: ChatMessage, onNavigate: (String) -> Unit) {
     val bgColor = if (msg.isUser) SakuraPrimary else Color.White
     val textColor = if (msg.isUser) Color.White else SakuraTextDark
 
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalAlignment = alignment) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalAlignment = alignment
+    ) {
         Surface(color = bgColor, shape = RoundedCornerShape(12.dp), shadowElevation = 1.dp) {
             if (msg.isTyping) {
                 TypingAnimation()
@@ -629,7 +1026,11 @@ fun ChatBubble(msg: ChatMessage, onNavigate: (String) -> Unit) {
                 MarkdownText(
                     markdown = msg.text,
                     modifier = Modifier.padding(12.dp),
-                    style = TextStyle(color = textColor, fontSize = 14.sp, fontWeight = FontWeight.Normal),
+                    style = TextStyle(
+                        color = textColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
                     // KÍCH HOẠT CHỨC NĂNG CLICK LINK
                     onLinkClicked = { url -> onNavigate(url) }
                 )
@@ -646,12 +1047,24 @@ fun TypingAnimation() {
         animationSpec = infiniteRepeatable(animation = tween(600), repeatMode = RepeatMode.Reverse),
         label = "alpha"
     )
-    Text("• • •", modifier = Modifier.padding(12.dp).alpha(alpha), color = SakuraPrimary, fontWeight = FontWeight.Bold)
+    Text(
+        "• • •",
+        modifier = Modifier
+            .padding(12.dp)
+            .alpha(alpha),
+        color = SakuraPrimary,
+        fontWeight = FontWeight.Bold
+    )
 }
 
 @Composable
 fun EmptyData(msg: String = "Chưa có dữ liệu 🍃") {
-    Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text("🍃", fontSize = 24.sp)
         Text(msg, color = SakuraTextLight, fontSize = 13.sp)
     }
@@ -672,14 +1085,18 @@ fun ContactRowWrapper(label: String, value: String) {
                 try {
                     when {
                         value.contains("@") -> { // Mở app Gửi Email
-                            val intent = Intent(Intent.ACTION_SENDTO,
-                                "mailto:${value.trim()}".toUri())
+                            val intent = Intent(
+                                Intent.ACTION_SENDTO,
+                                "mailto:${value.trim()}".toUri()
+                            )
                             context.startActivity(intent)
                         }
+
                         value.startsWith("http") -> { // Mở Trình duyệt
                             val intent = Intent(Intent.ACTION_VIEW, value.trim().toUri())
                             context.startActivity(intent)
                         }
+
                         value.matches(Regex("^[0-9+()\\s-]*$")) && value.length > 8 -> { // Mở app Gọi điện
                             val cleanNumber = value.replace(Regex("[\\s-]"), "")
                             val intent = Intent(Intent.ACTION_DIAL, "tel:$cleanNumber".toUri())
@@ -696,7 +1113,11 @@ fun ContactRowWrapper(label: String, value: String) {
         // Tinh chỉnh icon đa dạng hơn
         val icon = when {
             label.contains("Mail", true) || label.contains("Email", true) -> "✉️"
-            label.contains("Phone", true) || label.contains("Tel", true) || label.contains("Thoại", true) -> "📞"
+            label.contains("Phone", true) || label.contains("Tel", true) || label.contains(
+                "Thoại",
+                true
+            ) -> "📞"
+
             label.contains("Git", true) -> "🐙"
             label.contains("Linked", true) -> "💼"
             label.contains("Face", true) -> "📘"
@@ -737,20 +1158,31 @@ fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: N
         Column {
             // 1. Ảnh Thumbnail
             val imageList = try {
-                if (post.images?.contains("http") ?: false) post.images?.replace("[\"", "")?.replace("\"]", "")
+                if (post.images?.contains("http") ?: false) post.images?.replace("[\"", "")
+                    ?.replace("\"]", "")
                     ?.split("\",\"")[0]
                 else ""
-            } catch (_: Exception) { "" }
+            } catch (_: Exception) {
+                ""
+            }
 
             if (imageList?.isNotEmpty() ?: false) {
                 Image(
                     painter = rememberAsyncImagePainter(imageList.trim()),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Box(modifier = Modifier.fillMaxWidth().height(140.dp).background(SakuraGlass), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .background(SakuraGlass),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(Icons.Default.Image, null, tint = SakuraSecondary)
                 }
             }
@@ -809,7 +1241,12 @@ fun HorizontalPostLane(
                 }
             }
         } else {
-            Text("Chưa có dữ liệu 🍃", fontSize = 12.sp, color = SakuraTextLight, modifier = Modifier.padding(start = 8.dp))
+            Text(
+                "Chưa có dữ liệu 🍃",
+                fontSize = 12.sp,
+                color = SakuraTextLight,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
     }
 }

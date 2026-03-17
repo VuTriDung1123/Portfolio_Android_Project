@@ -30,7 +30,6 @@ interface SakuraApiService {
 
 object RetrofitClient {
     // [QUAN TRỌNG] ĐÂY LÀ CHÌA KHÓA KẾT NỐI
-    // Chúng ta trỏ thẳng vào website của bạn trên Vercel
     private const val BASE_URL = "https://personal-portfolio-vu-tri-dung-saku.vercel.app/"
 
     val api: SakuraApiService by lazy {

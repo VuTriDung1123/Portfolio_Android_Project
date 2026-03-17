@@ -2,7 +2,14 @@ package com.personal.portfolio.data
 
 // --- MODELS ---
 data class InfoItem(val label: String, val value: String)
-data class ProjectItem(val id: String, val title: String, val desc: String, val tech: String, val imageRes: Int)
+data class ProjectItem(
+    val id: String,
+    val title: String,
+    val desc: String,
+    val tech: String,
+    val imageRes: Int
+)
+
 data class ExpItem(val time: String, val role: String, val place: String, val details: List<String>)
 data class ContactItem(val type: String, val value: String, val icon: String)
 data class SimpleItem(val title: String, val subtitle: String, val imageRes: Int)

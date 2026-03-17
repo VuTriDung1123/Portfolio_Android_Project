@@ -2,22 +2,28 @@ package com.personal.portfolio.ui.viewmodel
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.personal.portfolio.data.remote.*
+import com.personal.portfolio.BuildConfig
+import com.personal.portfolio.data.remote.ExpGroup
+import com.personal.portfolio.data.remote.FaqItem
+import com.personal.portfolio.data.remote.HeroData
+import com.personal.portfolio.data.remote.Post
+import com.personal.portfolio.data.remote.RetrofitClient
+import com.personal.portfolio.data.remote.SectionBox
+import com.personal.portfolio.data.remote.SectionData
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
-import com.personal.portfolio.BuildConfig
 import kotlinx.coroutines.flow.update
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.launch
 
 // --- 1. STATE QUẢN LÝ GIAO DIỆN ---
 data class HomeUiState(
@@ -86,12 +92,24 @@ class HomeViewModel : ViewModel() {
             }
 
             try {
-                val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (_: Exception) { emptyList() } }
+                val postsDeferred = async {
+                    try {
+                        RetrofitClient.api.getPosts()
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                }
 
                 suspend fun fetchRawJson(key: String): String? {
-                    val res = try { RetrofitClient.api.getSectionContent(key) } catch (_: Exception) { null }
+                    val res = try {
+                        RetrofitClient.api.getSectionContent(key)
+                    } catch (_: Exception) {
+                        null
+                    }
                     return if (res != null) {
-                        when(lang) { "en" -> res.contentEn; "jp" -> res.contentJp; else -> res.contentVi }
+                        when (lang) {
+                            "en" -> res.contentEn; "jp" -> res.contentJp; else -> res.contentVi
+                        }
                     } else null
                 }
 
@@ -107,13 +125,38 @@ class HomeViewModel : ViewModel() {
                 val achiJson = fetchRawJson("achievements")
                 val galleryJson = fetchRawJson("gallery")
 
-                val skillsList = if(!skillsJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(skillsJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
-                val heroData = if(!heroJson.isNullOrEmpty()) gson.fromJson(heroJson, HeroData::class.java) else HeroData()
-                val profileList = if(!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(profileJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
-                val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
-                val contactList = if(!contactJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(contactJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
-                val faqList = if(!faqJson.isNullOrEmpty()) gson.fromJson<List<FaqItem>>(faqJson, object : TypeToken<List<FaqItem>>() {}.type) else emptyList()
-                val galleryList = if(!galleryJson.isNullOrEmpty()) try { gson.fromJson<List<String>>(galleryJson, object : TypeToken<List<String>>() {}.type) } catch(_:Exception){ emptyList() } else emptyList()
+                val skillsList = if (!skillsJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(
+                    skillsJson,
+                    object : TypeToken<List<SectionBox>>() {}.type
+                ) else emptyList()
+                val heroData = if (!heroJson.isNullOrEmpty()) gson.fromJson(
+                    heroJson,
+                    HeroData::class.java
+                ) else HeroData()
+                val profileList = if (!profileJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(
+                    profileJson,
+                    object : TypeToken<List<SectionBox>>() {}.type
+                ) else emptyList()
+                val expList = if (!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(
+                    expJson,
+                    object : TypeToken<List<ExpGroup>>() {}.type
+                ) else emptyList()
+                val contactList = if (!contactJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(
+                    contactJson,
+                    object : TypeToken<List<SectionBox>>() {}.type
+                ) else emptyList()
+                val faqList = if (!faqJson.isNullOrEmpty()) gson.fromJson<List<FaqItem>>(
+                    faqJson,
+                    object : TypeToken<List<FaqItem>>() {}.type
+                ) else emptyList()
+                val galleryList = if (!galleryJson.isNullOrEmpty()) try {
+                    gson.fromJson<List<String>>(
+                        galleryJson,
+                        object : TypeToken<List<String>>() {}.type
+                    )
+                } catch (_: Exception) {
+                    emptyList()
+                } else emptyList()
 
                 val allPosts = postsDeferred.await()
 
@@ -183,7 +226,10 @@ class HomeViewModel : ViewModel() {
                 }
             } catch (_: Exception) {
                 _chatHistory.update { history ->
-                    history.filter { !it.isTyping } + ChatMessage("Lỗi kết nối AI rồi... 🌸", isUser = false)
+                    history.filter { !it.isTyping } + ChatMessage(
+                        "Lỗi kết nối AI rồi... 🌸",
+                        isUser = false
+                    )
                 }
             }
         }
@@ -219,7 +265,9 @@ class HomeViewModel : ViewModel() {
                     adminMessage = "Lưu bài viết thành công! 🌸"
                     loadAllData(_uiState.value.currentLanguage, forceRefresh = true) // Tải lại list
                 } else adminMessage = "Lỗi lưu bài viết 🍃"
-            } catch (e: Exception) { adminMessage = "Lỗi mạng: ${e.message}" }
+            } catch (e: Exception) {
+                adminMessage = "Lỗi mạng: ${e.message}"
+            }
         }
     }
 
@@ -232,7 +280,9 @@ class HomeViewModel : ViewModel() {
                     adminMessage = "Đã xóa! 🌸"
                     loadAllData(_uiState.value.currentLanguage, forceRefresh = true)
                 }
-            } catch (e: Exception) { adminMessage = "Lỗi xóa: ${e.message}" }
+            } catch (e: Exception) {
+                adminMessage = "Lỗi xóa: ${e.message}"
+            }
         }
     }
 
@@ -241,11 +291,18 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             adminMessage = "Đang đồng bộ lên Web... ⏳"
             try {
-                val requestData = mapOf("sectionKey" to key, "contentEn" to enJson, "contentVi" to viJson, "contentJp" to jpJson)
+                val requestData = mapOf(
+                    "sectionKey" to key,
+                    "contentEn" to enJson,
+                    "contentVi" to viJson,
+                    "contentJp" to jpJson
+                )
                 RetrofitClient.api.saveSectionContent(requestData)
                 adminMessage = "Lưu mục $key thành công! 🌸"
                 loadAllData(_uiState.value.currentLanguage, forceRefresh = true)
-            } catch (e: Exception) { adminMessage = "Lỗi: ${e.message}" }
+            } catch (e: Exception) {
+                adminMessage = "Lỗi: ${e.message}"
+            }
         }
     }
 }

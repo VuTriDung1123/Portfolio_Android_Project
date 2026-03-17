@@ -23,7 +23,7 @@ fun ScrollReveal(
     AnimatedVisibility(
         visible = isVisible,
         enter = slideInVertically(
-            initialOffsetY = { 100 }, // Trượt từ dưới lên 100px
+            initialOffsetY = { 100 },
             animationSpec = tween(durationMillis = 700)
         ) + fadeIn(animationSpec = tween(durationMillis = 700))
     ) {

@@ -4,7 +4,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,9 +25,35 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,9 +71,14 @@ import com.personal.portfolio.data.SakuraData
 import com.personal.portfolio.data.remote.Post
 import com.personal.portfolio.ui.components.SakuraFallingEffect
 import com.personal.portfolio.ui.components.ScrollReveal
-import com.personal.portfolio.ui.theme.*
+import com.personal.portfolio.ui.theme.SakuraBg
+import com.personal.portfolio.ui.theme.SakuraGlass
+import com.personal.portfolio.ui.theme.SakuraPortfolioTheme
+import com.personal.portfolio.ui.theme.SakuraPrimary
+import com.personal.portfolio.ui.theme.SakuraSecondary
+import com.personal.portfolio.ui.theme.SakuraTextDark
+import com.personal.portfolio.ui.theme.SakuraTextLight
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
-import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
@@ -48,37 +91,50 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     var isNewestFirst by rememberSaveable { mutableStateOf(true) }
 
     // Dữ liệu tĩnh (Title, Hint...)
-    val staticText = when(currentLang) {
+    val staticText = when (currentLang) {
         "en" -> SakuraData.en
         "jp" -> SakuraData.jp
         else -> SakuraData.vi
     }
 
     // Danh sách Tags cố định (Tiếng Anh như yêu cầu)
-    val tags = listOf("ALL", "Confessions", "Uni Projects", "Personal Code", "Achievements", "IT Events", "Certificates")
+    val tags = listOf(
+        "ALL",
+        "Confessions",
+        "Uni Projects",
+        "Personal Code",
+        "Achievements",
+        "IT Events",
+        "Certificates"
+    )
 
     // --- LOGIC LỌC BÀI VIẾT ---
-    val displayedPosts = remember(uiState.allPosts, searchQuery, selectedTag, isNewestFirst, currentLang) {
-        uiState.allPosts.filter { post ->
-            // 1. Lọc theo ngôn ngữ hiện tại (Bài viết phải có language == currentLang)
-            // Lưu ý: Nếu bài viết không có trường language hoặc bạn muốn hiện tất cả thì bỏ dòng này
-            post.language == currentLang || post.language == "all"
-        }.filter { post ->
-            // 2. Lọc theo Search (Tìm trong Title)
-            searchQuery.isEmpty() || post.title.contains(searchQuery, ignoreCase = true)
-        }.filter { post ->
-            // 3. Lọc theo Tag
-            selectedTag == "ALL" || (post.tag?.contains(selectedTag, ignoreCase = true) == true)
-        }.sortedBy { post ->
-            // 4. Sắp xếp thời gian
-            post.createdAt // Giả sử post.createdAt là String chuẩn ISO hoặc Long
-        }.let {
-            if (isNewestFirst) it.reversed() else it
+    val displayedPosts =
+        remember(uiState.allPosts, searchQuery, selectedTag, isNewestFirst, currentLang) {
+            uiState.allPosts.filter { post ->
+                // 1. Lọc theo ngôn ngữ hiện tại (Bài viết phải có language == currentLang)
+                // Lưu ý: Nếu bài viết không có trường language hoặc bạn muốn hiện tất cả thì bỏ dòng này
+                post.language == currentLang || post.language == "all"
+            }.filter { post ->
+                // 2. Lọc theo Search (Tìm trong Title)
+                searchQuery.isEmpty() || post.title.contains(searchQuery, ignoreCase = true)
+            }.filter { post ->
+                // 3. Lọc theo Tag
+                selectedTag == "ALL" || (post.tag?.contains(selectedTag, ignoreCase = true) == true)
+            }.sortedBy { post ->
+                // 4. Sắp xếp thời gian
+                post.createdAt // Giả sử post.createdAt là String chuẩn ISO hoặc Long
+            }.let {
+                if (isNewestFirst) it.reversed() else it
+            }
         }
-    }
 
     SakuraPortfolioTheme(lang = currentLang) {
-        Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFF0F5))) { // Nền hồng nhạt toàn màn hình
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFFFF0F5))
+        ) { // Nền hồng nhạt toàn màn hình
             SakuraFallingEffect()
 
             Scaffold(
@@ -101,7 +157,11 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             // Cụm trái: Nút quay lại + Tiêu đề nhỏ
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = SakuraPrimary
+                                    )
                                 }
                                 Column {
                                     Text(
@@ -126,7 +186,10 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             )
                         }
                         // Đường kẻ mảnh trang trí phía dưới
-                        HorizontalDivider(color = SakuraSecondary.copy(alpha = 0.3f), thickness = 1.dp)
+                        HorizontalDivider(
+                            color = SakuraSecondary.copy(alpha = 0.3f),
+                            thickness = 1.dp
+                        )
                     }
                 }
             ) { padding ->
@@ -140,7 +203,9 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     // 1. HEADER (Title & Quote)
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             // Logo hoa anh đào
@@ -169,15 +234,29 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     // 2. SEARCH & SORT BAR
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Search Box
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                placeholder = { Text(staticText.blog_search_hint, fontSize = 13.sp, color = Color.Gray) },
-                                leadingIcon = { Icon(Icons.Default.Search, null, tint = SakuraPrimary) },
+                                placeholder = {
+                                    Text(
+                                        staticText.blog_search_hint,
+                                        fontSize = 13.sp,
+                                        color = Color.Gray
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Search,
+                                        null,
+                                        tint = SakuraPrimary
+                                    )
+                                },
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(50.dp)
@@ -199,13 +278,16 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     containerColor = Color.White,
                                     contentColor = SakuraPrimary
                                 ),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, SakuraPrimary),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    SakuraPrimary
+                                ),
                                 shape = RoundedCornerShape(12.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                                 modifier = Modifier.height(50.dp)
                             ) {
                                 Icon(
-                                    if(isNewestFirst) Icons.Default.AccessTime else Icons.Default.History,
+                                    if (isNewestFirst) Icons.Default.AccessTime else Icons.Default.History,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -221,12 +303,16 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     // 3. TAGS FILTER (Horizontal Scroll)
                     item {
                         LazyRow(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(tags) { tag ->
-                                val isSelected = if(tag == "ALL") selectedTag == "ALL" else selectedTag == tag
-                                val displayLabel = if(tag == "ALL") staticText.blog_tab_all else tag
+                                val isSelected =
+                                    if (tag == "ALL") selectedTag == "ALL" else selectedTag == tag
+                                val displayLabel =
+                                    if (tag == "ALL") staticText.blog_tab_all else tag
 
                                 FilterChip(
                                     selected = isSelected, // Tham số bắt buộc
@@ -234,7 +320,7 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     label = {
                                         Text(
                                             text = displayLabel,
-                                            fontWeight = if(isSelected) FontWeight.Bold else FontWeight.Normal
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                         )
                                     },
                                     enabled = true, // [SỬA LỖI] Thêm tham số enabled
@@ -247,7 +333,7 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                     border = FilterChipDefaults.filterChipBorder(
                                         enabled = true,
                                         selected = isSelected,
-                                        borderColor = if(isSelected) SakuraPrimary else SakuraSecondary,
+                                        borderColor = if (isSelected) SakuraPrimary else SakuraSecondary,
                                         borderWidth = 1.dp
                                     ),
                                     shape = CircleShape
@@ -259,7 +345,12 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                     // 4. POST LIST
                     if (displayedPosts.isEmpty()) {
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(top = 50.dp), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 50.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text("🍃", fontSize = 40.sp)
                                     Spacer(Modifier.height(8.dp))
@@ -303,26 +394,38 @@ fun BlogPostCard(post: Post, navController: NavController) {
             val imageList = try {
                 // Giả sử post.images là chuỗi JSON "['url1', 'url2']"
                 // Ở đây mình parse sơ bộ hoặc dùng ảnh mặc định
-                if (post.images?.contains("http") ?: false ) post.images?.replace("[\"", "")
+                if (post.images?.contains("http") ?: false) post.images?.replace("[\"", "")
                     ?.replace("\"]", "")
                     ?.split("\",\"")[0]
                 else ""
-            } catch (_: Exception) { "" }
+            } catch (_: Exception) {
+                ""
+            }
 
             if (imageList?.isNotEmpty() ?: false) {
                 Image(
                     painter = rememberAsyncImagePainter(imageList),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(180.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 // Ảnh placeholder nếu không có ảnh
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(150.dp).background(SakuraGlass),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .background(SakuraGlass),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Image, null, tint = SakuraSecondary, modifier = Modifier.size(40.dp))
+                    Icon(
+                        Icons.Default.Image,
+                        null,
+                        tint = SakuraSecondary,
+                        modifier = Modifier.size(40.dp)
+                    )
                 }
             }
 
@@ -361,7 +464,9 @@ fun BlogPostCard(post: Post, navController: NavController) {
                     // Format lại ngày: 2025-10-16 -> October 16, 2025
                     // Lưu ý: Cần xử lý kỹ hơn tùy format server trả về
                     post.createdAt.toString().take(10)
-                } catch (_: Exception) { "" }
+                } catch (_: Exception) {
+                    ""
+                }
 
                 Text(
                     text = "Date: $dateStr",
@@ -400,9 +505,19 @@ fun BlogLanguageDropdown(currentLang: String, onLangSelect: (String) -> Unit) {
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(currentLang.uppercase(), color = SakuraPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(
+                currentLang.uppercase(),
+                color = SakuraPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
             Spacer(Modifier.width(4.dp))
-            Icon(Icons.Default.ArrowDropDown, null, tint = SakuraPrimary, modifier = Modifier.size(16.dp))
+            Icon(
+                Icons.Default.ArrowDropDown,
+                null,
+                tint = SakuraPrimary,
+                modifier = Modifier.size(16.dp)
+            )
         }
         DropdownMenu(
             expanded = expanded,
@@ -415,8 +530,8 @@ fun BlogLanguageDropdown(currentLang: String, onLangSelect: (String) -> Unit) {
                     text = {
                         Text(
                             label,
-                            color = if(currentLang == code) SakuraPrimary else SakuraTextDark,
-                            fontWeight = if(currentLang == code) FontWeight.Bold else FontWeight.Normal
+                            color = if (currentLang == code) SakuraPrimary else SakuraTextDark,
+                            fontWeight = if (currentLang == code) FontWeight.Bold else FontWeight.Normal
                         )
                     },
                     onClick = {
