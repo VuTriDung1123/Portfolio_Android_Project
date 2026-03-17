@@ -2,7 +2,6 @@ package com.personal.portfolio.ui.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -47,9 +46,9 @@ import com.personal.portfolio.ui.screens.admin.AdminScreen
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.automirrored.filled.Send
 import com.personal.portfolio.ui.viewmodel.ChatMessage
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import androidx.compose.ui.text.TextStyle
@@ -71,7 +70,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
     // --- 3. QUẢN LÝ INTRO (Fix lỗi Cannot infer type & load lại) ---
     // Khởi tạo dựa trên việc đã có data Hero hay chưa
     var showIntro by remember {
-        mutableStateOf<Boolean>(uiState.hero.fullName.isEmpty())
+        mutableStateOf(uiState.hero.fullName.isEmpty())
     }
 
     // Tự động tắt Intro khi data về
@@ -108,14 +107,10 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
             PoeticLoadingScreen(
                 lang = displayLang,
                 onFinished = {
-                    if (isSwitchingLang) {
-                        isSwitchingLang = false
-                    }
-                    showIntro = false
                 }
             )
         } else if (showAdmin) {
-            AdminScreen(onGoBack = { showAdmin = false })
+            AdminScreen(onGoBack = { })
         } else {
             Box(modifier = Modifier.fillMaxSize()) {
                 SakuraFallingEffect()
@@ -135,7 +130,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                 Box(
                                     modifier = Modifier
                                         .size(52.dp)
-                                        .pointerInput(Unit) { detectTapGestures(onLongPress = { showAdmin = true }) },
+                                        .pointerInput(Unit) { detectTapGestures(onLongPress = { }) },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     val avatarPainter = if (uiState.hero.avatarUrl.isNotEmpty())
@@ -149,7 +144,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                 Spacer(Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (uiState.hero.fullName.isNotEmpty()) uiState.hero.fullName else "Loading...",
+                                        text = uiState.hero.fullName.ifEmpty { "Loading..." },
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = SakuraTextDark
@@ -233,8 +228,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                                     .horizontalScroll(rememberScrollState()),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                val enName = if(uiState.hero.nickName1.isNotEmpty()) uiState.hero.nickName1 else staticText.hero["sub_name_1"]
-                                                val jpName = if(uiState.hero.nickName2.isNotEmpty()) uiState.hero.nickName2 else staticText.hero["sub_name_2"]
+                                                val enName = uiState.hero.nickName1.ifEmpty { staticText.hero["sub_name_1"] }
+                                                val jpName = uiState.hero.nickName2.ifEmpty { staticText.hero["sub_name_2"] }
 
                                                 if (!enName.isNullOrEmpty()) NicknameBadge(label = "EN", name = enName)
                                                 if (!enName.isNullOrEmpty() && !jpName.isNullOrEmpty()) Spacer(Modifier.width(8.dp))
@@ -250,7 +245,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                                             val typewriterWords = remember(uiState.hero.typewriter) {
                                                 try {
                                                     Gson().fromJson(uiState.hero.typewriter, Array<String>::class.java).toList()
-                                                } catch (e: Exception) {
+                                                } catch (_: Exception) {
                                                     listOf("Developer", "Student")
                                                 }
                                             }
@@ -322,36 +317,80 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                         }
 
                         // --- CÁC SECTION KHÁC ---
-                        item { SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) } }
-                        item { SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) } }
-                        item { SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag?.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag?.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag?.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } } }
-                        item { SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) } }
-                        item { SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag?.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) } }
                         item {
-                            SectionCard(staticText.sec_06_skills) {
-                                if(uiState.skills.isNotEmpty()) {
-                                    uiState.skills.forEach { box ->
-                                        if(box.title.isNotEmpty()) {
-                                            Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp, bottom=5.dp))
-                                        }
-                                        box.items.forEach { item ->
-                                            Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) {
-                                                Text(item.label, color = SakuraTextLight)
-                                                Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark)
-                                            }
-                                        }
-                                    }
-                                } else EmptyData(staticText.msg_no_skills)
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_01_about) { if(uiState.about.isNotEmpty()) Text(uiState.about, color = SakuraTextDark, lineHeight = 24.sp) else EmptyData(staticText.msg_no_about) }
                             }
                         }
-                        item { SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) } }
-                        item { SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag?.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag?.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } } }
-                        item { SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag?.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) } }
-                        item { SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag?.lowercase()
-                            ?.contains("project")!!
-                        }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) } }
-                        item { SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) } }
-                        item { SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) } }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_02_profile) { if(uiState.profile.isNotEmpty()) { uiState.profile.forEach { box -> if(box.title.isNotEmpty()) Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp)); box.items.forEach { item -> Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) { Text(item.label, color = SakuraTextLight); Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark) } } } } else EmptyData(staticText.msg_no_profile) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_03_cert) { Column { val itCerts = uiState.allPosts.filter { it.tag?.lowercase() == "tech_certs" }; HorizontalPostLane("❖ IT Certificates", itCerts, navController); Spacer(Modifier.height(16.dp)); val langCerts = uiState.allPosts.filter { it.tag?.lowercase() == "lang_certs" }; HorizontalPostLane("❖ Language Certificates", langCerts, navController); Spacer(Modifier.height(16.dp)); val otherCerts = uiState.allPosts.filter { it.tag?.lowercase() == "other_certs" }; HorizontalPostLane("❖ Other Certificates", otherCerts, navController) } }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_04_career) { if(uiState.career.isNotEmpty()) Text(uiState.career, fontStyle = FontStyle.Italic, color = SakuraTextDark) else EmptyData(staticText.msg_no_career) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_05_achievements) { val achievements = uiState.allPosts.filter { it.tag?.lowercase() == "achievements" }; HorizontalPostLane(null, achievements, navController) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_06_skills) {
+                                    if(uiState.skills.isNotEmpty()) {
+                                        uiState.skills.forEach { box ->
+                                            if(box.title.isNotEmpty()) {
+                                                Text("★ ${box.title}", fontWeight = FontWeight.Bold, color = SakuraPrimary, modifier = Modifier.padding(top=10.dp, bottom=5.dp))
+                                            }
+                                            box.items.forEach { item ->
+                                                Row(Modifier.fillMaxWidth().padding(vertical=4.dp), Arrangement.SpaceBetween) {
+                                                    Text(item.label, color = SakuraTextLight)
+                                                    Text(item.value, fontWeight = FontWeight.Bold, color = SakuraTextDark)
+                                                }
+                                            }
+                                        }
+                                    } else EmptyData(staticText.msg_no_skills)
+                                }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_07_exp) { if(uiState.experience.isNotEmpty()) { uiState.experience.forEach { group -> Text(group.title, fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp)); group.items.forEach { exp -> Column(Modifier.padding(bottom = 12.dp, start = 10.dp)) { Text(exp.role, fontWeight = FontWeight.Bold, color = SakuraTextDark); Text(exp.time, fontSize = 12.sp, color = SakuraPrimary); exp.details.forEach { d -> Text("• $d", fontSize = 13.sp, color = SakuraTextLight) } } } } } else EmptyData(staticText.msg_no_exp) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_08_proj) { Column { val uniProjs = uiState.allPosts.filter { it.tag?.lowercase() == "uni_projects" }; HorizontalPostLane("❖ University Projects", uniProjs, navController); Spacer(Modifier.height(16.dp)); val perProjs = uiState.allPosts.filter { it.tag?.lowercase() == "personal_projects" }; HorizontalPostLane("❖ Personal Projects", perProjs, navController) } }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_09_gallery) { val itEvents = uiState.allPosts.filter { it.tag?.lowercase() == "it_events" }; HorizontalPostLane(null, itEvents, navController) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_10_blog) { val blogs = uiState.allPosts.filter { !it.tag?.lowercase()?.contains("project")!! }.take(3); if (blogs.isNotEmpty()) { Column { Row(Modifier.horizontalScroll(rememberScrollState())) { blogs.forEach { HomePostCard(it, navController) } }; TextButton(onClick = { navController.navigate("blog") }, Modifier.align(Alignment.End)) { Text(staticText.btn_view_all, color = SakuraPrimary, fontWeight = FontWeight.Bold) } } } else EmptyData(staticText.msg_no_blog) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 100) {
+                                SectionCard(staticText.sec_11_faq) { if(uiState.faq.isNotEmpty()) { uiState.faq.take(3).forEach { FAQItem(it.q, it.a) }; TextButton(onClick = { navController.navigate("faq") }, Modifier.fillMaxWidth()) { Text(staticText.btn_view_all) } } else EmptyData(staticText.msg_no_faq) }
+                            }
+                        }
+                        item {
+                            ScrollReveal(delayMillis = 150) {
+                                SectionCard(staticText.sec_12_contact) { if(uiState.contact.isNotEmpty()) uiState.contact.forEach { box -> box.items.forEach { ContactRowWrapper(it.label, it.value) } } else EmptyData(staticText.msg_no_contact) }
+                            }
+                        }
                     }
                 }
                 if (showChatDialog) ChatDialog(onDismiss = { showChatDialog = false }, navController = navController)
@@ -381,22 +420,21 @@ fun NicknameBadge(label: String, name: String) {
 
 @Composable
 fun TypewriterText(prefix: String, texts: List<String>, modifier: Modifier = Modifier) {
-    var textIndex by remember { mutableStateOf(0) }
+    var textIndex by remember { mutableIntStateOf(0) }
     var displayedText by remember { mutableStateOf("") }
 
     LaunchedEffect(textIndex, texts) {
         val targetText = texts[textIndex % texts.size]
         for (i in 1..targetText.length) {
-            displayedText = targetText.substring(0, i)
+            displayedText = targetText.take(i)
             delay(100)
         }
         delay(1500)
         for (i in targetText.length downTo 0) {
-            displayedText = targetText.substring(0, i)
+            displayedText = targetText.take(i)
             delay(50)
         }
         delay(500)
-        textIndex++
     }
 
     Text(
@@ -457,7 +495,7 @@ fun PoeticLoadingScreen(lang: String, onFinished: () -> Unit) {
         else -> listOf("Code chạy đúng là do tâm linh...", "3000 dòng code, 1 dòng lỗi...", "Đang triệu hồi bug đi chỗ khác...", "Uống cafe, fix bug, lặp lại... ☕", "Tính năng này là 'tính năng ẩn'...", "Server đang thở oxy...", "Code xong rồi, chỉ chưa chạy thôi...", "Đang Google cách sửa lỗi...", "Đừng tắt máy, đang hack NASA...", "Dev đang ngủ, vui lòng đợi...")
     }
     val randomPoems = remember { poems.shuffled().take(3) }
-    var currentLineIndex by remember { mutableStateOf(0) }
+    var currentLineIndex by remember { mutableIntStateOf(0) }
     val alphaAnim = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         randomPoems.forEachIndexed { index, _ ->
@@ -528,7 +566,7 @@ fun ChatDialog(onDismiss: () -> Unit, viewModel: HomeViewModel = viewModel(), na
                         },
                         modifier = Modifier.padding(start = 8.dp).background(SakuraPrimary, CircleShape)
                     ) {
-                        Icon(Icons.Default.Send, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.Send, null, tint = Color.White)
                     }
                 }
             }
@@ -571,13 +609,6 @@ fun TypingAnimation() {
 }
 
 @Composable
-fun Badge(text: String) {
-    Surface(color = SakuraSecondary.copy(alpha = 0.3f), shape = CircleShape, border = androidx.compose.foundation.BorderStroke(1.dp, SakuraSecondary)) {
-        Text(text, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), fontSize = 12.sp, color = SakuraTextDark, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
 fun EmptyData(msg: String = "Chưa có dữ liệu 🍃") {
     Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text("🍃", fontSize = 24.sp)
@@ -611,7 +642,7 @@ fun HomePostCard(post: com.personal.portfolio.data.remote.Post, navController: N
                 if (post.images?.contains("http") ?: false) post.images?.replace("[\"", "")?.replace("\"]", "")
                     ?.split("\",\"")[0]
                 else ""
-            } catch (e: Exception) { "" }
+            } catch (_: Exception) { "" }
 
             if (imageList?.isNotEmpty() ?: false) {
                 Image(

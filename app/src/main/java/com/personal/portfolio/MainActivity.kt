@@ -1,8 +1,10 @@
 package com.personal.portfolio
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,6 +16,7 @@ import com.personal.portfolio.ui.theme.SakuraPortfolioTheme
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

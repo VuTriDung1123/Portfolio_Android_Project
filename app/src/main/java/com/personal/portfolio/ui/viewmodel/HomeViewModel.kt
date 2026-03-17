@@ -86,10 +86,10 @@ class HomeViewModel : ViewModel() {
             }
 
             try {
-                val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (e: Exception) { emptyList() } }
+                val postsDeferred = async { try { RetrofitClient.api.getPosts() } catch (_: Exception) { emptyList() } }
 
                 suspend fun fetchRawJson(key: String): String? {
-                    val res = try { RetrofitClient.api.getSectionContent(key) } catch (e: Exception) { null }
+                    val res = try { RetrofitClient.api.getSectionContent(key) } catch (_: Exception) { null }
                     return if (res != null) {
                         when(lang) { "en" -> res.contentEn; "jp" -> res.contentJp; else -> res.contentVi }
                     } else null
@@ -113,7 +113,7 @@ class HomeViewModel : ViewModel() {
                 val expList = if(!expJson.isNullOrEmpty()) gson.fromJson<List<ExpGroup>>(expJson, object : TypeToken<List<ExpGroup>>() {}.type) else emptyList()
                 val contactList = if(!contactJson.isNullOrEmpty()) gson.fromJson<List<SectionBox>>(contactJson, object : TypeToken<List<SectionBox>>() {}.type) else emptyList()
                 val faqList = if(!faqJson.isNullOrEmpty()) gson.fromJson<List<FaqItem>>(faqJson, object : TypeToken<List<FaqItem>>() {}.type) else emptyList()
-                val galleryList = if(!galleryJson.isNullOrEmpty()) try { gson.fromJson<List<String>>(galleryJson, object : TypeToken<List<String>>() {}.type) } catch(e:Exception){ emptyList() } else emptyList()
+                val galleryList = if(!galleryJson.isNullOrEmpty()) try { gson.fromJson<List<String>>(galleryJson, object : TypeToken<List<String>>() {}.type) } catch(_:Exception){ emptyList() } else emptyList()
 
                 val allPosts = postsDeferred.await()
 
@@ -181,7 +181,7 @@ class HomeViewModel : ViewModel() {
                 _chatHistory.update { history ->
                     history.filter { !it.isTyping } + ChatMessage(botResponse, isUser = false)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _chatHistory.update { history ->
                     history.filter { !it.isTyping } + ChatMessage("Lỗi kết nối AI rồi... 🌸", isUser = false)
                 }
@@ -203,38 +203,10 @@ class HomeViewModel : ViewModel() {
     suspend fun getRawSectionForAdmin(key: String): SectionData? {
         return try {
             RetrofitClient.api.getSectionContent(key)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
-
-    // Hàm 2: Bắn dữ liệu lên Next.js API để lưu vào PostgreSQL
-    fun saveSectionContent(key: String, contentEn: String, contentVi: String, contentJp: String) {
-        viewModelScope.launch {
-            adminMessage = "Đang lưu lên Database... ⏳"
-            try {
-                // Đóng gói dữ liệu giống hệt JSON body bên Next.js yêu cầu
-                val requestData = mapOf(
-                    "sectionKey" to key,
-                    "contentEn" to contentEn,
-                    "contentVi" to contentVi,
-                    "contentJp" to contentJp
-                )
-
-                // Gọi API POST
-                val response = RetrofitClient.api.saveSectionContent(requestData)
-
-                adminMessage = "Đã lưu thành công lên Web & App! 🌸"
-
-                // Ép Home tải lại dữ liệu mới nhất để khi thoát Admin ra ngoài sẽ thấy ngay
-                loadAllData(lang = _uiState.value.currentLanguage, forceRefresh = true)
-
-            } catch (e: Exception) {
-                adminMessage = "Lỗi lưu: ${e.localizedMessage} 🍃"
-            }
-        }
-    }
-
 
     // --- QUẢN LÝ BLOG ---
     fun savePost(post: Post, isEdit: Boolean) {

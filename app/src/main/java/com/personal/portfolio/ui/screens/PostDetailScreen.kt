@@ -1,14 +1,13 @@
 package com.personal.portfolio.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
-import dev.jeziellago.compose.markdowntext.MarkdownText // Dùng Markdown thay cho Text
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import androidx.compose.ui.text.TextStyle
 import com.personal.portfolio.ui.theme.SakuraGlass
 
@@ -44,7 +43,7 @@ fun PostDetailScreen(
                 title = { Text(post?.tag ?: "Story", fontSize = 14.sp, color = Color.Gray) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -85,7 +84,7 @@ fun PostDetailScreen(
                     try {
                         val regex = "(https?://[^\"]+)".toRegex()
                         regex.findAll(post.images ?: "").map { it.value.trim() }.toList()
-                    } catch (e: Exception) { emptyList() }
+                    } catch (_: Exception) { emptyList() }
                 }
 
                 if (images.isNotEmpty()) {
@@ -93,7 +92,7 @@ fun PostDetailScreen(
                     Text("📸 Gallery", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFF69B4))
                     Spacer(Modifier.height(16.dp))
 
-                    images.forEachIndexed { index, imgUrl ->
+                    images.forEachIndexed { _, imgUrl ->
                         Image(
                             painter = rememberAsyncImagePainter(imgUrl),
                             contentDescription = null,

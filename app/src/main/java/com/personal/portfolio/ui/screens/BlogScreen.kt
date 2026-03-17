@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +32,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.personal.portfolio.data.SakuraData
 import com.personal.portfolio.data.remote.Post
 import com.personal.portfolio.ui.components.SakuraFallingEffect
+import com.personal.portfolio.ui.components.ScrollReveal
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 
@@ -97,7 +100,7 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             // Cụm trái: Nút quay lại + Tiêu đề nhỏ
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SakuraPrimary)
                                 }
                                 Column {
                                     Text(
@@ -122,7 +125,7 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             )
                         }
                         // Đường kẻ mảnh trang trí phía dưới
-                        Divider(color = SakuraSecondary.copy(alpha = 0.3f), thickness = 1.dp)
+                        HorizontalDivider(color = SakuraSecondary.copy(alpha = 0.3f), thickness = 1.dp)
                     }
                 }
             ) { padding ->
@@ -264,8 +267,11 @@ fun BlogScreen(navController: NavController, viewModel: HomeViewModel = viewMode
                             }
                         }
                     } else {
-                        items(displayedPosts) { post ->
-                            BlogPostCard(post, navController)
+                        itemsIndexed(displayedPosts) { index, post ->
+                            val calculatedDelay = (index % 5) * 100L
+                            ScrollReveal(delayMillis = calculatedDelay) {
+                                BlogPostCard(post, navController)
+                            }
                             Spacer(Modifier.height(16.dp))
                         }
                     }
@@ -297,7 +303,7 @@ fun BlogPostCard(post: Post, navController: NavController) {
                     ?.replace("\"]", "")
                     ?.split("\",\"")[0]
                 else ""
-            } catch (e: Exception) { "" }
+            } catch (_: Exception) { "" }
 
             if (imageList?.isNotEmpty() ?: false) {
                 Image(
@@ -351,7 +357,7 @@ fun BlogPostCard(post: Post, navController: NavController) {
                     // Format lại ngày: 2025-10-16 -> October 16, 2025
                     // Lưu ý: Cần xử lý kỹ hơn tùy format server trả về
                     post.createdAt.toString().take(10)
-                } catch (e: Exception) { "" }
+                } catch (_: Exception) { "" }
 
                 Text(
                     text = "Date: $dateStr",
