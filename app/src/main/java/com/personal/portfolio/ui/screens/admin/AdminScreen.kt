@@ -1,8 +1,6 @@
 package com.personal.portfolio.ui.screens.admin
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,7 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -40,17 +38,25 @@ fun AdminScreen(onGoBack: () -> Unit, viewModel: HomeViewModel = viewModel()) {
             Column {
                 TopAppBar(
                     title = { Text("🌸 DASHBOARD ADMIN", fontWeight = FontWeight.Bold, color = SakuraPrimary, fontSize = 18.sp) },
-                    navigationIcon = { IconButton(onClick = onGoBack) { Icon(Icons.Default.ArrowBack, "Back", tint = SakuraPrimary) } },
+                    navigationIcon = { IconButton(onClick = onGoBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = SakuraPrimary) } },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = SakuraGlass)
                 )
                 // TABS CHUYỂN ĐỔI NHƯ WEB
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = if (activeTab == "blog") 0 else 1,
                     containerColor = Color.White,
                     contentColor = SakuraPrimary
                 ) {
-                    Tab(selected = activeTab == "blog", onClick = { activeTab = "blog" }, text = { Text("📝 QUẢN LÝ BLOG", fontWeight = FontWeight.Bold) })
-                    Tab(selected = activeTab == "sections", onClick = { activeTab = "sections" }, text = { Text("⚙️ NỘI DUNG (SECTIONS)", fontWeight = FontWeight.Bold) })
+                    Tab(
+                        selected = activeTab == "blog",
+                        onClick = { activeTab = "blog" },
+                        text = { Text("📝 QUẢN LÝ BLOG", fontWeight = FontWeight.Bold) }
+                    )
+                    Tab(
+                        selected = activeTab == "sections",
+                        onClick = { activeTab = "sections" },
+                        text = { Text("⚙️ NỘI DUNG (SECTIONS)", fontWeight = FontWeight.Bold) }
+                    )
                 }
             }
         }
@@ -107,7 +113,10 @@ fun AdminSectionsTab(viewModel: HomeViewModel) {
         ExposedDropdownMenuBox(expanded = expandedDropdown, onExpandedChange = { expandedDropdown = !expandedDropdown }) {
             OutlinedTextField(
                 value = selectedSectionName, onValueChange = {}, readOnly = true,
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryEditable,
+                    enabled = true
+                ).fillMaxWidth(),
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown) },
                 colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SakuraPrimary)
             )
@@ -129,7 +138,7 @@ fun AdminSectionsTab(viewModel: HomeViewModel) {
 
             if (isBoxSection) {
                 // UI DÀNH CHO BOX (Skills, Contact...)
-                val parseBox = { json: String -> try { gson.fromJson<List<SectionBox>>(json, Array<SectionBox>::class.java).toList() } catch (e:Exception) { emptyList() } }
+                val parseBox = { json: String -> try { gson.fromJson<List<SectionBox>>(json, Array<SectionBox>::class.java).toList() } catch (_:Exception) { emptyList() } }
                 var boxesVi by remember(jsonVi) { mutableStateOf(parseBox(jsonVi)) }
 
                 Text("Chỉnh sửa (Bản Tiếng Việt) - Các bản khác sửa trên Web", color = SakuraTextLight, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
@@ -200,13 +209,13 @@ fun AdminBlogTab(viewModel: HomeViewModel) {
             OutlinedTextField(value = editingPost!!.title, onValueChange = { editingPost = editingPost!!.copy(title = it) }, label = { Text("Tiêu đề") }, modifier = Modifier.fillMaxWidth())
 
             Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                editingPost!!.tag?.let { OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(tag = it) }, label = { Text("Tag (VD: uni_projects)") }, modifier = Modifier.weight(1f)) }
+                editingPost!!.tag?.let { it -> OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(tag = it) }, label = { Text("Tag (VD: uni_projects)") }, modifier = Modifier.weight(1f)) }
                 Spacer(Modifier.width(8.dp))
-                editingPost!!.language?.let { OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(language = it) }, label = { Text("Lang (vi/en/jp)") }, modifier = Modifier.weight(1f)) }
+                editingPost!!.language?.let { it -> OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(language = it) }, label = { Text("Lang (vi/en/jp)") }, modifier = Modifier.weight(1f)) }
             }
 
-            editingPost!!.images?.let { OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(images = it) }, label = { Text("Link Ảnh (Định dạng JSON Array ['url'])") }, modifier = Modifier.fillMaxWidth().padding(top=8.dp)) }
-            editingPost!!.content?.let { OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(content = it) }, label = { Text("Nội dung (Hỗ trợ Markdown)") }, modifier = Modifier.fillMaxWidth().height(200.dp).padding(top=8.dp)) }
+            editingPost!!.images?.let { it -> OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(images = it) }, label = { Text("Link Ảnh (Định dạng JSON Array ['url'])") }, modifier = Modifier.fillMaxWidth().padding(top=8.dp)) }
+            editingPost!!.content?.let { it -> OutlinedTextField(value = it, onValueChange = { editingPost = editingPost!!.copy(content = it) }, label = { Text("Nội dung (Hỗ trợ Markdown)") }, modifier = Modifier.fillMaxWidth().height(200.dp).padding(top=8.dp)) }
 
             Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth()) {
@@ -220,7 +229,7 @@ fun AdminBlogTab(viewModel: HomeViewModel) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             AdminMessage(viewModel.adminMessage)
             Button(
-                onClick = { editingPost = Post("", "", "my_confessions", "vi", "", "[]", "") },
+                onClick = {  Post("", "", "my_confessions", "vi", "", "[]", "") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), colors = ButtonDefaults.buttonColors(SakuraPrimary)
             ) { Text("✍️ TẠO BÀI VIẾT MỚI", fontWeight = FontWeight.Bold) }
 
@@ -232,7 +241,7 @@ fun AdminBlogTab(viewModel: HomeViewModel) {
                                 Text(post.title, fontWeight = FontWeight.Bold, color = SakuraTextDark)
                                 Text("${post.tag} | ${post.language}", color = SakuraPrimary, fontSize = 12.sp)
                             }
-                            IconButton(onClick = { editingPost = post.copy() }) { Icon(Icons.Default.Edit, "Edit", tint = Color.Blue) }
+                            IconButton(onClick = { post.copy() }) { Icon(Icons.Default.Edit, "Edit", tint = Color.Blue) }
                             IconButton(onClick = { viewModel.deletePost(post.id) }) { Icon(Icons.Default.Delete, "Delete", tint = Color.Red) }
                         }
                     }
