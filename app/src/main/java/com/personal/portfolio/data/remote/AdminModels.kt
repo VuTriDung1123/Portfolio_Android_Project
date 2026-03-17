@@ -40,7 +40,7 @@ data class SectionBoxItem(
 data class SectionBox(
     val id: String = "",
     var title: String = "",
-    var items: MutableList<SectionBoxItem> = mutableListOf() // MutableList để dùng .add, .removeAt
+    var items: MutableList<SectionBoxItem> = mutableListOf()
 )
 
 // Experience

@@ -11,7 +11,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.personal.portfolio.ui.screens.*
+import com.personal.portfolio.ui.screens.BlogScreen
+import com.personal.portfolio.ui.screens.FAQScreen
+import com.personal.portfolio.ui.screens.HomeScreen
+import com.personal.portfolio.ui.screens.PostDetailScreen
 import com.personal.portfolio.ui.theme.SakuraPortfolioTheme
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 
@@ -20,11 +23,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Lưu ý: SakuraPortfolioTheme của bạn có thể cần tham số lang,
-            // nếu báo lỗi chỗ này thì thêm tham số mặc định vào.
             SakuraPortfolioTheme {
                 val navController = rememberNavController()
-                val viewModel: HomeViewModel = viewModel() // Dùng chung 1 instance cho toàn App
+                val viewModel: HomeViewModel = viewModel()
 
                 NavHost(navController = navController, startDestination = "home") {
                     // 1. Trang Chủ
@@ -44,18 +45,15 @@ class MainActivity : ComponentActivity() {
 
                     // 4. Trang Chi tiết bài viết (Dùng bản khai báo đầy đủ tham số)
                     composable(
-                        route = "post_detail/{postId}",
-                        arguments = listOf(
-                            navArgument("postId") { type = NavType.StringType }
-                        )
-                    ) { backStackEntry ->
+                        route = "post_detail/{postId}", arguments = listOf(
+                        navArgument("postId") {
+                            type = NavType.StringType
+                        })) { backStackEntry ->
                         val postId = backStackEntry.arguments?.getString("postId")
 
                         // Truyền đúng thứ tự: postId, navController, viewModel
                         PostDetailScreen(
-                            postId = postId,
-                            navController = navController,
-                            viewModel = viewModel
+                            postId = postId, navController = navController, viewModel = viewModel
                         )
                     }
                 }

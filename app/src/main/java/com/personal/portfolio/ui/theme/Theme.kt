@@ -24,7 +24,7 @@ private val SakuraColorScheme = lightColorScheme(
 
 @Composable
 fun SakuraPortfolioTheme(
-    lang: String = "en", // [MỚI] Thêm tham số ngôn ngữ
+    lang: String = "en",
     content: @Composable () -> Unit
 ) {
     val colorScheme = SakuraColorScheme

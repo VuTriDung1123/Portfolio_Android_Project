@@ -9,9 +9,9 @@ import androidx.compose.ui.unit.sp
 import com.personal.portfolio.R
 
 // 1. Định nghĩa các bộ Font
-val FontEN = FontFamily(Font(R.font.noto_sans_regular)) // Đảm bảo bạn đã có file này
-val FontVI = FontFamily(Font(R.font.noto_serif_regular)) // Đảm bảo bạn đã có file này
-val FontJP = FontFamily(Font(R.font.noto_serif_jp_regular)) // Đảm bảo bạn đã có file này
+val FontEN = FontFamily(Font(R.font.noto_sans_regular))
+val FontVI = FontFamily(Font(R.font.noto_serif_regular))
+val FontJP = FontFamily(Font(R.font.noto_serif_jp_regular))
 
 // 2. Hàm lấy Typography theo ngôn ngữ
 fun getTypography(lang: String): Typography {

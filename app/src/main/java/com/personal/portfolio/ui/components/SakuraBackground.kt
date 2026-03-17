@@ -20,7 +20,7 @@ private data class Petal(
     var y: Float,
     val size: Float,
     val speed: Float,
-    val rotationSpeed: Float, // Tốc độ xoay
+    val rotationSpeed: Float,
     val initialRotation: Float,
     val swayAmount: Float,
     val swaySpeed: Float,
@@ -31,12 +31,12 @@ private data class Petal(
 fun SakuraFallingEffect() {
     LocalDensity.current
     val petals = remember {
-        List(30) { // Giảm số lượng chút cho đỡ rối
+        List(30) {
             Petal(
                 x = Random.nextFloat(),
                 y = Random.nextFloat() * -1f,
-                size = Random.nextFloat() * 15f + 10f, // Kích thước to hơn chút
-                speed = Random.nextFloat() * 0.5f + 0.2f, // [FIX] Tốc độ RẤT CHẬM (0.2 -> 0.7)
+                size = Random.nextFloat() * 15f + 10f,
+                speed = Random.nextFloat() * 0.5f + 0.2f,
                 rotationSpeed = Random.nextFloat() * 2f - 1f,
                 initialRotation = Random.nextFloat() * 360f,
                 swayAmount = Random.nextFloat() * 0.1f + 0.05f,
@@ -51,14 +51,20 @@ fun SakuraFallingEffect() {
         initialValue = 0f,
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
-            animation = tween(40000, easing = LinearEasing), // [FIX] Tăng thời gian loop -> Chuyển động mượt chậm
+            animation = tween(
+                40000,
+                easing = LinearEasing
+            ),
             repeatMode = RepeatMode.Restart
         ), label = "Time"
     )
 
     val reusablePath = remember { Path() }
 
-    Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.8f }) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = 0.8f }) {
         val width = size.width
         val height = size.height
 
@@ -71,12 +77,25 @@ fun SakuraFallingEffect() {
 
             if (drawY > -50f && drawY < height + 50f) {
                 rotate(degrees = rotation, pivot = Offset(currentX, drawY)) {
-                    // [TỐI ƯU 2]: Xóa object cũ, dùng lại object path này
                     reusablePath.reset()
                     reusablePath.apply {
                         moveTo(currentX, drawY)
-                        cubicTo(currentX + petal.size / 2, drawY - petal.size / 2, currentX + petal.size, drawY + petal.size / 2, currentX, drawY + petal.size)
-                        cubicTo(currentX - petal.size, drawY + petal.size / 2, currentX - petal.size / 2, drawY - petal.size / 2, currentX, drawY)
+                        cubicTo(
+                            currentX + petal.size / 2,
+                            drawY - petal.size / 2,
+                            currentX + petal.size,
+                            drawY + petal.size / 2,
+                            currentX,
+                            drawY + petal.size
+                        )
+                        cubicTo(
+                            currentX - petal.size,
+                            drawY + petal.size / 2,
+                            currentX - petal.size / 2,
+                            drawY - petal.size / 2,
+                            currentX,
+                            drawY
+                        )
                         close()
                     }
                     drawPath(path = reusablePath, color = Color(0xFFFFC1E3).copy(alpha = 0.7f))
