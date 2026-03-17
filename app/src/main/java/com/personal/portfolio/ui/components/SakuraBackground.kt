@@ -56,40 +56,30 @@ fun SakuraFallingEffect() {
         ), label = "Time"
     )
 
+    val reusablePath = remember { Path() }
+
     Canvas(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.8f }) {
         val width = size.width
         val height = size.height
 
         petals.forEach { petal ->
-            // Tính toán vị trí
             val currentY = (petal.y + (time * petal.speed * 0.01f)) % 1.2f
             val sway = sin(time * petal.swaySpeed * 0.005f + petal.offset) * petal.swayAmount
             val currentX = (petal.x + sway) * width
             val drawY = if (currentY > 1f) -100f else currentY * height
-
-            // Góc xoay
             val rotation = petal.initialRotation + (time * petal.rotationSpeed)
 
             if (drawY > -50f && drawY < height + 50f) {
-                // [FIX] Vẽ hình cánh hoa thay vì hình tròn
                 rotate(degrees = rotation, pivot = Offset(currentX, drawY)) {
-                    val path = Path().apply {
+                    // [TỐI ƯU 2]: Xóa object cũ, dùng lại object path này
+                    reusablePath.reset()
+                    reusablePath.apply {
                         moveTo(currentX, drawY)
-                        // Vẽ đường cong Bezier tạo hình cánh hoa
-                        cubicTo(
-                            currentX + petal.size / 2, drawY - petal.size / 2,
-                            currentX + petal.size, drawY + petal.size / 2,
-                            currentX, drawY + petal.size
-                        )
-                        cubicTo(
-                            currentX - petal.size, drawY + petal.size / 2,
-                            currentX - petal.size / 2, drawY - petal.size / 2,
-                            currentX, drawY
-                        )
+                        cubicTo(currentX + petal.size / 2, drawY - petal.size / 2, currentX + petal.size, drawY + petal.size / 2, currentX, drawY + petal.size)
+                        cubicTo(currentX - petal.size, drawY + petal.size / 2, currentX - petal.size / 2, drawY - petal.size / 2, currentX, drawY)
                         close()
                     }
-                    // Màu hồng phấn đậm nhạt ngẫu nhiên
-                    drawPath(path = path, color = Color(0xFFFFC1E3).copy(alpha = 0.7f))
+                    drawPath(path = reusablePath, color = Color(0xFFFFC1E3).copy(alpha = 0.7f))
                 }
             }
         }

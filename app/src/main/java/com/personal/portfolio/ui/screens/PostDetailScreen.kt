@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +25,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import androidx.compose.ui.text.TextStyle
+import coil.request.ImageRequest
 import com.personal.portfolio.ui.theme.SakuraGlass
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,7 +96,12 @@ fun PostDetailScreen(
 
                     images.forEachIndexed { _, imgUrl ->
                         Image(
-                            painter = rememberAsyncImagePainter(imgUrl),
+                            painter = rememberAsyncImagePainter(
+                                ImageRequest.Builder(LocalContext.current)
+                                    .data(imgUrl)
+                                    .crossfade(true)
+                                    .build()
+                            ),
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth()

@@ -26,6 +26,7 @@ import com.personal.portfolio.data.remote.SectionBox
 import com.personal.portfolio.data.remote.SectionBoxItem
 import com.personal.portfolio.ui.theme.*
 import com.personal.portfolio.ui.viewmodel.HomeViewModel
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +87,7 @@ fun AdminSectionsTab(viewModel: HomeViewModel) {
         "contact" to "10. LIÊN HỆ (Boxes)"
     )
 
-    var expandedDropdown by remember { mutableStateOf(false) }
+    var expandedDropdown by rememberSaveable { mutableStateOf(false) }
     var selectedSectionKey by remember { mutableStateOf(sectionsList[0].first) }
     var selectedSectionName by remember { mutableStateOf(sectionsList[0].second) }
 
@@ -234,7 +235,9 @@ fun AdminBlogTab(viewModel: HomeViewModel) {
             ) { Text("✍️ TẠO BÀI VIẾT MỚI", fontWeight = FontWeight.Bold) }
 
             LazyColumn {
-                items(uiState.allPosts) { post ->
+                items(uiState.allPosts,
+                    key = { it.id }
+                ) { post ->
                     Card(modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp), colors = CardDefaults.cardColors(Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
